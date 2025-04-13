@@ -1,0 +1,61 @@
+/* Emergency styles to fix stepper CSS issues */
+
+:root {
+  --app-success: #22c55e !important;
+  --app-text-primary: #111827 !important;
+  --app-text-muted: #6b7280 !important;
+  --app-bg-primary: #ffffff !important;
+  --app-bg-secondary: #f9fafb !important;
+  --app-bg-tertiary: #f3f4f6 !important;
+  --app-border-primary: #e5e7eb !important;
+  --app-border-secondary: #d1d5db !important;
+  --app-focus-ring: #3b82f6 !important;
+  --app-hover-bg: #f3f4f6 !important;
+}
+
+/* Direct color overrides using attribute selectors instead of class selectors with escapes */
+[class*="text-[var(--app-success)]"], 
+[class*="text-[#22c55e]"] {
+  color: #22c55e !important;
+}
+
+[class*="bg-[var(--app-success)]"],
+[class*="bg-[#22c55e]"] {
+  background-color: #22c55e !important;
+}
+
+[class*="border-[var(--app-success)]"],
+[class*="border-[#22c55e]"] {
+  border-color: #22c55e !important;
+}
+
+/* Force a specific color for all success-colored elements */
+.success-text, .text-success, .text-green-500, .text-green-600 {
+  color: #22c55e !important;
+}
+
+.success-bg, .bg-success, .bg-green-500, .bg-green-600 {
+  background-color: #22c55e !important;
+}
+
+/* Additional container and background fixes */
+.stepper-form-container, 
+.stepper-form-wrapper,
+div[class*="stepper"] {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* Text color overrides */
+p, h1, h2, h3, h4, h5, h6, span, label {
+  color: #111827;
+}
+
+/* Button styling */
+button[class*="bg-[var(--app-success)]"],
+button[class*="bg-[#22c55e]"],
+button.success,
+button.bg-success {
+  background-color: #22c55e !important;
+  color: white !important;
+} 

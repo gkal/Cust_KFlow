@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+.pnpm-store/
+
+# Build files
+/dist/
+/build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Testing
+/coverage/
+
+# Misc
+.cache/
+.temp/ 

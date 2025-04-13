@@ -1,0 +1,67 @@
+/* Direct color overrides for form elements */
+
+/* General text colors */
+.text-\[var\(--app-text-primary\)\] {
+  color: #111827 !important;
+}
+
+.text-\[var\(--app-text-muted\)\] {
+  color: #6b7280 !important;
+}
+
+.text-\[var\(--app-success\)\] {
+  color: #22c55e !important;
+}
+
+/* Background colors */
+.bg-\[var\(--app-bg-primary\)\] {
+  background-color: #ffffff !important;
+}
+
+.bg-\[var\(--app-bg-secondary\)\] {
+  background-color: #f9fafb !important;
+}
+
+.bg-\[var\(--app-bg-tertiary\)\] {
+  background-color: #f3f4f6 !important;
+}
+
+.bg-\[var\(--app-success\)\] {
+  background-color: #22c55e !important;
+}
+
+/* Border colors */
+.border-\[var\(--app-border-primary\)\] {
+  border-color: #e5e7eb !important;
+}
+
+.border-\[var\(--app-border-secondary\)\] {
+  border-color: #d1d5db !important;
+}
+
+.border-\[var\(--app-success\)\] {
+  border-color: #22c55e !important;
+}
+
+/* Inputs and form elements */
+input, textarea, select {
+  border-color: #e5e7eb !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* Success elements */
+button, 
+[class*="success"],
+div:has(> div > svg[class*="check"]),
+div:has(> span:contains("Ναι")),
+div:has(> span:contains("Πελάτης")),
+div:has(> span:contains("Κρόνος")) {
+  color: #22c55e !important;
+}
+
+/* Success buttons */
+button.bg-\[var\(--app-success\)\] {
+  background-color: #22c55e !important;
+  color: white !important;
+} 
