@@ -1,0 +1,7 @@
+pnpm run dev -- --host
+
+
+pnpm run build 
+
+
+pnpm run serve
