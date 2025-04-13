@@ -1,0 +1,27 @@
+{
+  "name": "kronos-stepper-form",
+  "version": "1.0.0",
+  "description": "A reusable stepper form component for Kronos applications",
+  "main": "src/pages/stepper-form.tsx",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@supabase/supabase-js": "^2.38.4",
+    "zod": "^3.22.4",
+    "tailwindcss": "^3.3.5",
+    "postcss": "^8.4.31",
+    "autoprefixer": "^10.4.16"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "typescript": "^5.2.2",
+    "vite": "^4.5.0",
+    "@vitejs/plugin-react": "^4.1.1"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  }
+} 

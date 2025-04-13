@@ -1,0 +1,27 @@
+:root {
+  /* Color variables for Kronos styling - add !important */
+  --app-success: #22c55e !important;
+  --app-text-primary: #111827 !important;
+  --app-text-muted: #6b7280 !important;
+  --app-bg-primary: #ffffff !important;
+  --app-bg-secondary: #f9fafb !important;
+  --app-bg-tertiary: #f3f4f6 !important;
+  --app-border-primary: #e5e7eb !important;
+  --app-border-secondary: #d1d5db !important;
+  --app-focus-ring: #3b82f6 !important;
+  --app-hover-bg: #f3f4f6 !important;
+} 
+
+/* Also add these direct CSS class mappings */
+.text-\[var\(--app-success\)\] { color: #22c55e !important; }
+.text-\[var\(--app-text-primary\)\] { color: #111827 !important; }
+.text-\[var\(--app-text-muted\)\] { color: #6b7280 !important; }
+
+.bg-\[var\(--app-success\)\] { background-color: #22c55e !important; }
+.bg-\[var\(--app-bg-primary\)\] { background-color: #ffffff !important; }
+.bg-\[var\(--app-bg-secondary\)\] { background-color: #f9fafb !important; }
+.bg-\[var\(--app-bg-tertiary\)\] { background-color: #f3f4f6 !important; }
+
+.border-\[var\(--app-border-primary\)\] { border-color: #e5e7eb !important; }
+.border-\[var\(--app-border-secondary\)\] { border-color: #d1d5db !important; }
+.border-\[var\(--app-success\)\] { border-color: #22c55e !important; } 
