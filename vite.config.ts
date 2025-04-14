@@ -7,8 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@stepper': path.resolve(__dirname, './stepper-package/src')
+      '@': path.resolve(__dirname, './src')
     }
   },
   server: {
@@ -16,7 +15,13 @@ export default defineConfig({
     open: true,
     hmr: {
       overlay: true
+    },
+    watch: {
+      usePolling: true
     }
+  },
+  css: {
+    devSourcemap: true
   },
   build: {
     outDir: 'dist',

@@ -74,6 +74,7 @@ export type SubmissionData = z.infer<typeof submissionSchema>;
 export default function StepperForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [agreementChecked, setAgreementChecked] = useState(false);
   const [dialogState, setDialogState] = useState<{
     show: boolean;
     title: string;
@@ -171,6 +172,7 @@ export default function StepperForm() {
     setValidationErrors({});
     setIsSubmitting(false);
     setFormSubmitted(true);
+    setAgreementChecked(false);
     
     // Mark as submitted in session storage
     sessionStorage.setItem('form_submitted', 'true');
@@ -246,21 +248,41 @@ export default function StepperForm() {
     setFormData(prev => ({ ...prev, [name]: !prev[name as keyof typeof prev] }));
   };
   
+  // Handle agreement checkbox
+  const handleAgreementChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAgreementChecked(e.target.checked);
+  };
+  
   const steps = ['Στοιχεία Διεύθυνσης', 'Τύπος Αποβλήτου', 'Στοιχεία Φόρτωσης', 'Προεπισκόπηση'];
 
   // Validate the current step before proceeding
   const validateCurrentStep = (): boolean => {
     try {
       if (currentStep === 0) {
-        // @ts-ignore: Variable is used for validation side effects
+        if (!formData.address.trim()) {
+          setValidationErrors({
+            address: "Το πεδίο Διεύθυνση είναι υποχρεωτικό. Παρακαλώ συμπληρώστε το για να συνεχίσετε."
+          });
+          return false;
+        }
         formSchema.pick({ address: true }).parse(formData);
         return true;
       } else if (currentStep === 1) {
-        // @ts-ignore: Variable is used for validation side effects
+        if (!formData.wasteType.trim()) {
+          setValidationErrors({
+            wasteType: "Το πεδίο Τύπος Αποβλήτου είναι υποχρεωτικό. Παρακαλώ συμπληρώστε το για να συνεχίσετε."
+          });
+          return false;
+        }
         formSchema.pick({ wasteType: true }).parse(formData);
         return true;
       } else if (currentStep === 2) {
-        // @ts-ignore: Variable is used for validation side effects
+        if (!formData.loading.trim()) {
+          setValidationErrors({
+            loading: "Το πεδίο Φόρτωση είναι υποχρεωτικό. Παρακαλώ συμπληρώστε το για να συνεχίσετε."
+          });
+          return false;
+        }
         formSchema.pick({ loading: true }).parse(formData);
         return true;
       }
@@ -378,76 +400,100 @@ export default function StepperForm() {
     }
   };
 
-// Replace dynamic CSS variable styling with direct hardcoded values for reliability
+// Simplified custom styles that only focus on what we need to change
 const customStyles = `
-  /* Target everything in this component with high specificity */
-  #root div div div div div div div {
-    color: #111827 !important;
-  }
-  
-  /* Target specific elements that should be green */
-  button, 
-  [class*="success"],
-  div:has(> div > svg[class*="check"]),
-  div:has(> span:contains("Ναι")),
-  div:has(> span:contains("Πελάτης")),
-  div:has(> span:contains("Κρόνος")) {
-    color: #22c55e !important;
-  }
-  
-  /* Make backgrounds visible */
-  [class*="bg-"] {
-    background-color: #ffffff !important;
-  }
-  
-  [class*="bg-"]:has(> h1),
-  [class*="bg-"]:has(> h2),
-  [class*="bg-"]:has(> h3) {
-    background-color: #f3f4f6 !important;
-  }
-  
-  /* Fix inputs */
+  /* Essential original styles for the app */
   input, textarea, button, select {
-    border: 1px solid #e5e7eb !important;
-    background-color: #ffffff !important;
-    color: #111827 !important;
+    border: 1px solid #52796f !important;
+    background-color: #354f52 !important;
+    color: #cad2c5 !important;
+  }
+  
+  /* Input placeholder color */
+  ::placeholder {
+    color: #a8c5b5 !important;
+    opacity: 0.7 !important;
+  }
+  
+  /* Override for green submit button text */
+  button[style*="background-color: #22c55e"] {
+    color: #000000 !important;
+  }
+  
+  /* Direct ID selectors for maximum specificity */
+  #form-header {
+    color: #84a98c !important;
+  }
+  
+  #summary-header {
+    color: #84a98c !important;
+  }
+  
+  /* Very specific selector for form headers */
+  .stepper-form-container .space-y-6 > h2 {
+    color: #84a98c !important; 
+  }
+  
+  /* Summary header */
+  .space-y-6 .bg-\\[\\#ffffff\\] > h3 {
+    color: #84a98c !important;
+  }
+  
+  /* One more attempt with attribute selectors */
+  h2[style*="color: #84a98c"], h3[style*="color: #84a98c"] {
+    color: #84a98c !important;
+  }
+  
+  /* Fixed height for textareas to display 3 lines */
+  .fixed-height-textarea {
+    min-height: 110px !important;
+    height: auto !important;
   }
 `;
+
+// Add this styling for the validation error messages to make them more noticeable
+const errorStyle = {
+  padding: '8px 12px',
+  borderRadius: '4px',
+  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  border: '1px solid rgba(239, 68, 68, 0.3)'
+};
+
   // If form is submitted, show a thank you message with options
   if (formSubmitted) {
     return (
-      <div className="max-w-5xl mx-auto p-4 sm:p-6 text-center stepper-form-container">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 text-center stepper-form-container">
         <div className="flex justify-center mb-6 sm:mb-8">
           <img src="/assets/images/logo.png" alt="Λογότυπο Εταιρείας" className="h-10 sm:h-14" />
         </div>
         
-        <div className="p-6 sm:p-8 bg-[#f3f4f6] rounded-lg border border-[#e5e7eb]">
+        <div className="p-6 sm:p-8 bg-[#354f52] rounded-lg border border-[#52796f]">
           <h1 className="text-xl sm:text-2xl font-bold text-[#22c55e] mb-4">Η προσφορά υποβλήθηκε επιτυχώς!</h1>
-          <p className="text-[#111827] text-base sm:text-lg">Σας ευχαριστούμε για την υποβολή της προσφοράς.</p>
+          <p className="text-[#84a98c] text-base sm:text-lg">Σας ευχαριστούμε για την υποβολή της προσφοράς.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-6 stepper-form-container">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 stepper-form-container">
       {/* Inject custom CSS */}
       <style>{customStyles}</style>
       
       {/* Custom Dialog with direct color values */}
       {dialogState.show && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#ffffff] rounded-lg shadow-lg p-4 sm:p-6 max-w-md w-full">
+          <div className="bg-[#354f52] rounded-lg shadow-lg p-4 sm:p-6 max-w-md w-full border border-[#52796f]">
             <h3 className={`text-lg sm:text-xl font-bold mb-4 ${dialogState.isError ? 'text-[#ef4444]' : 'text-[#22c55e]'}`}>
               {dialogState.title}
             </h3>
-            <p className="text-[#111827] mb-6">
+            <p className="text-[#cad2c5] mb-6">
               {dialogState.message}
             </p>
             <div className="flex justify-end">
               <button 
                 onClick={closeDialog}
-                className="px-4 py-2 bg-[#22c55e] text-[#111827] rounded hover:bg-opacity-90 transition-colors"
+                className="px-4 py-2 bg-[#22c55e] text-white rounded hover:bg-opacity-90 transition-colors"
               >
                 {dialogState.isError ? 'Κλείσιμο' : 'Συνέχεια'}
               </button>
@@ -464,8 +510,12 @@ const customStyles = `
       <h1 className="text-xl sm:text-2xl text-center md:text-left text-[#111827] mb-2">
         Φόρμα Προσφοράς για: <span className="font-bold">{formData.customerName}</span>
       </h1>
-      <p className="text-sm sm:text-base text-center md:text-left text-[#111827] mb-4 sm:mb-6">Συμπληρώστε τα στοιχεία για τη δημιουργία προσφοράς.</p>
-      <div className="border-t border-[#e5e7eb] mb-6 sm:mb-8" id="horizontal-divider-top"></div>
+      <p className="text-sm sm:text-base text-center md:text-left text-[#84a98c] mb-4 sm:mb-6">Συμπληρώστε τα στοιχεία για τη δημιουργία προσφοράς.</p>
+      <div 
+        className="border-t border-[#e5e7eb] mb-6 sm:mb-8" 
+        id="horizontal-divider-top"
+        style={{ borderColor: "#e5e7eb" }}
+      ></div>
       
       {/* Mobile stepper - visible only on small screens */}
       <div className="md:hidden mb-6">
@@ -475,16 +525,16 @@ const customStyles = `
               key={index}
               className={`flex flex-col items-center ${
                 index === currentStep 
-                  ? "text-[#22c55e]" 
+                  ? "text-[#84a98c]"
                   : index < currentStep 
-                    ? "text-[#111827]" 
+                    ? "text-[#84a98c]" 
                     : "text-[#6b7280]"
               }`}
             >
               <div 
                 className={`w-5 h-5 rounded-full flex items-center justify-center ${
                   index <= currentStep 
-                    ? "bg-[#22c55e]" 
+                    ? "bg-[#84a98c]"
                     : "bg-[#ffffff] border border-[#e5e7eb]"
                 }`}
               >
@@ -505,9 +555,9 @@ const customStyles = `
               key={`text-${index}`} 
               className={`w-1/4 text-center ${
                 index === currentStep 
-                  ? "text-[#22c55e] font-bold" 
+                  ? "text-[#84a98c] font-bold"
                   : index < currentStep 
-                    ? "text-[#111827]" 
+                    ? "text-[#84a98c]" 
                     : "text-[#6b7280]"
               }`}
             >
@@ -519,7 +569,7 @@ const customStyles = `
       
       <div className="flex flex-col md:flex-row gap-6 md:gap-10 relative">
         {/* Vertical stepper - hidden on small screens */}
-        <div className="hidden md:block md:w-1/3">
+        <div className="hidden md:block md:w-1/4">
           <Stepper 
             steps={steps} 
             currentStep={currentStep}
@@ -527,27 +577,37 @@ const customStyles = `
         </div>
         
         {/* Vertical divider line - hidden on small screens */}
-        <div className="hidden md:block absolute left-[28%] -top-8 h-[calc(100%+40px)] w-px bg-[#e5e7eb]" id="vertical-line"></div>
+        <div 
+          className="hidden md:block absolute left-[23.2%] -top-8 h-[calc(100%+40px)] w-px border-[#e5e7eb]" 
+          id="vertical-line"
+          style={{ 
+            backgroundColor: '#e5e7eb', 
+            zIndex: '50',
+            borderLeft: '1px solid #e5e7eb'
+          }}
+        ></div>
         
         {/* Content */}
-        <div className="w-full md:w-2/3">
+        <div className="w-full md:w-3/4">
           <div className="p-3 sm:p-6">
             {/* Fixed height content area - shorter on mobile */}
             <div className="min-h-[320px] sm:min-h-[450px]">
               {/* Step 1 - Customer address details */}
               {currentStep === 0 && (
                 <div className="space-y-6">
-                  <h2 className="text-lg sm:text-xl font-bold text-[#111827] mt-0 mb-4 sm:mb-6">Στοιχεία Διεύθυνσης</h2>
+                  <div className="text-lg sm:text-xl font-bold mt-0 mb-4 sm:mb-6">
+                    <span style={{ color: '#84a98c', fontWeight: 'bold' }}>Στοιχεία Διεύθυνσης</span>
+                  </div>
                   
                   <div>
-                    <label className="block text-base font-bold mb-2 text-[#111827]">
+                    <label className="block text-base font-normal mb-2 text-[#84a98c]">
                       Διεύθυνση <span className="text-red-500">*</span>
                     </label>
                     <input 
                       type="text" 
                       name="address"
-                      className="form-input w-full p-3 rounded text-base bg-[#ffffff] text-[#111827]"
-                      style={{border: '1px solid #e5e7eb', boxShadow: 'none'}}
+                      className="form-input w-full p-3 rounded text-base bg-[#354f52] text-[#cad2c5]"
+                      style={{border: '1px solid #52796f', boxShadow: 'none'}}
                       placeholder="Οδός και αριθμός"
                       value={formData.address}
                       onChange={handleInputChange}
@@ -557,24 +617,24 @@ const customStyles = `
                   
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="w-full sm:w-1/3">
-                      <label className="block text-base font-bold mb-2 text-[#111827]">ΤΚ</label>
+                      <label className="block text-base font-normal mb-2 text-[#84a98c]">ΤΚ</label>
                       <input 
                         type="text" 
                         name="postalCode"
-                        className="form-input w-full p-3 rounded text-base bg-[#ffffff] text-[#111827]"
-                        style={{border: '1px solid #e5e7eb', boxShadow: 'none'}}
+                        className="form-input w-full p-3 rounded text-base bg-[#354f52] text-[#cad2c5]"
+                        style={{border: '1px solid #52796f', boxShadow: 'none'}}
                         placeholder="Ταχ. Κώδικας"
                         value={formData.postalCode}
                         onChange={handleInputChange}
                       />
                     </div>
                     <div className="w-full sm:w-2/3">
-                      <label className="block text-base font-bold mb-2 text-[#111827]">Πόλη</label>
+                      <label className="block text-base font-normal mb-2 text-[#84a98c]">Πόλη</label>
                       <input 
                         type="text" 
                         name="city"
-                        className="form-input w-full p-3 rounded text-base bg-[#ffffff] text-[#111827]"
-                        style={{border: '1px solid #e5e7eb', boxShadow: 'none'}}
+                        className="form-input w-full p-3 rounded text-base bg-[#354f52] text-[#cad2c5]"
+                        style={{border: '1px solid #52796f', boxShadow: 'none'}}
                         placeholder="Πόλη"
                         value={formData.city}
                         onChange={handleInputChange}
@@ -583,7 +643,12 @@ const customStyles = `
                   </div>
                   
                   {validationErrors.address && (
-                    <div className="mt-4 text-red-500 text-sm">* {validationErrors.address}</div>
+                    <div className="mt-4 text-red-500 text-sm" style={errorStyle}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      {validationErrors.address}
+                    </div>
                   )}
                 </div>
               )}
@@ -591,16 +656,25 @@ const customStyles = `
               {/* Step 2 - Waste type and who transports */}
               {currentStep === 1 && (
                 <div className="space-y-6">
-                  <h2 className="text-lg sm:text-xl font-bold text-[#111827] mt-0 mb-4 sm:mb-6">Τύπος Αποβλήτου / Υπεύθυνος για την μεταφορά</h2>
+                  <div className="text-lg sm:text-xl font-bold mt-0 mb-4 sm:mb-6">
+                    <span style={{ color: '#84a98c', fontWeight: 'bold' }}>Τύπος Αποβλήτου / Υπεύθυνος για την μεταφορά</span>
+                  </div>
                   
                   <div>
-                    <label className="block text-base font-bold mb-2 text-[#111827]">
+                    <label className="block text-base font-normal mb-2 text-[#84a98c]">
                       Τύπος Αποβλήτου <span className="text-red-500">*</span>
                     </label>
                     <textarea 
                       name="wasteType"
-                      className="form-input fixed-height-textarea w-full p-3 rounded text-base bg-[#ffffff] text-[#111827]"
-                      style={{border: '1px solid #e5e7eb', boxShadow: 'none'}}
+                      className="form-input fixed-height-textarea w-full p-3 rounded text-base bg-[#354f52] text-[#cad2c5]"
+                      style={{
+                        border: '1px solid #52796f', 
+                        boxShadow: 'none',
+                        minHeight: '110px',
+                        height: 'auto',
+                        resize: 'none',
+                        lineHeight: '1.5'
+                      }}
                       placeholder="Περιγράψτε τον τύπο αποβλήτου..."
                       value={formData.wasteType}
                       onChange={handleInputChange}
@@ -611,9 +685,9 @@ const customStyles = `
                   
                   <div className="mt-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center">
-                      <span className="font-bold text-base text-[#111827] mb-2 sm:mb-0 sm:mr-3">Ποιος μεταφέρει:</span>
+                      <span className="font-normal text-base text-[#84a98c] mb-2 sm:mb-0 sm:mr-3">Ποιος μεταφέρει:</span>
                       <div className="flex items-center justify-center sm:justify-start w-full sm:w-auto" style={{ maxWidth: '250px' }}>
-                        <div className="w-20 text-base text-[#22c55e] font-medium">
+                        <div className="w-20 text-base text-[#84a98c] font-medium">
                           {!formData.whoTransports ? 'Πελάτης' : ''}
                         </div>
                         
@@ -624,10 +698,10 @@ const customStyles = `
                             checked={formData.whoTransports}
                             onChange={() => handleToggleChange('whoTransports')}
                           />
-                          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#22c55e]"></div>
+                          <div className="w-11 h-6 bg-[#354f52] border border-[#52796f] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#cad2c5] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#cad2c5] after:border-[#52796f] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#52796f]"></div>
                         </label>
                         
-                        <div className="w-20 text-base text-[#22c55e] font-medium">
+                        <div className="w-20 text-base text-[#84a98c] font-medium">
                           {formData.whoTransports ? 'Κρόνος' : ''}
                         </div>
                       </div>
@@ -635,7 +709,12 @@ const customStyles = `
                   </div>
                   
                   {validationErrors.wasteType && (
-                    <div className="mt-4 text-red-500 text-sm">* {validationErrors.wasteType}</div>
+                    <div className="mt-4 text-red-500 text-sm" style={errorStyle}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      {validationErrors.wasteType}
+                    </div>
                   )}
                 </div>
               )}
@@ -643,16 +722,25 @@ const customStyles = `
               {/* Step 3 - Loading details, HMA and certificate */}
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <h2 className="text-lg sm:text-xl font-bold text-[#111827] mt-0 mb-4 sm:mb-6">Στοιχεία Φόρτωσης</h2>
+                  <div className="text-lg sm:text-xl font-bold mt-0 mb-4 sm:mb-6">
+                    <span style={{ color: '#84a98c', fontWeight: 'bold' }}>Στοιχεία Φόρτωσης</span>
+                  </div>
                   
                   <div>
-                    <label className="block text-base font-bold mb-2 text-[#111827]">
+                    <label className="block text-base font-normal mb-2 text-[#84a98c]">
                       Φόρτωση <span className="text-red-500">*</span>
                     </label>
                     <textarea 
                       name="loading"
-                      className="form-input fixed-height-textarea w-full p-3 rounded text-base bg-[#ffffff] text-[#111827]"
-                      style={{border: '1px solid #e5e7eb', boxShadow: 'none'}}
+                      className="form-input fixed-height-textarea w-full p-3 rounded text-base bg-[#354f52] text-[#cad2c5]"
+                      style={{
+                        border: '1px solid #52796f', 
+                        boxShadow: 'none',
+                        minHeight: '110px',
+                        height: 'auto',
+                        resize: 'none',
+                        lineHeight: '1.5'
+                      }}
                       placeholder="Περιγράψτε λεπτομέρειες φόρτωσης..."
                       value={formData.loading}
                       onChange={handleInputChange}
@@ -663,9 +751,9 @@ const customStyles = `
                   
                   <div className="mt-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center">
-                      <span className="font-bold text-base text-[#111827] mb-2 sm:mb-0 sm:mr-3">ΗΜΑ:</span>
+                      <span className="font-normal text-base text-[#84a98c] mb-2 sm:mb-0 sm:mr-3">ΗΜΑ:</span>
                       <div className="flex items-center justify-center sm:justify-start w-full sm:w-auto" style={{ maxWidth: '200px' }}>
-                        <div className="w-16 text-base text-[#22c55e] font-medium">
+                        <div className="w-16 text-base text-[#84a98c] font-medium">
                           {!formData.hma ? 'Όχι' : ''}
                         </div>
                         
@@ -676,10 +764,10 @@ const customStyles = `
                             checked={formData.hma}
                             onChange={() => handleToggleChange('hma')}
                           />
-                          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#22c55e]"></div>
+                          <div className="w-11 h-6 bg-[#354f52] border border-[#52796f] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[#cad2c5] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#cad2c5] after:border-[#52796f] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#52796f]"></div>
                         </label>
                         
-                        <div className="w-16 text-base text-[#22c55e] font-medium">
+                        <div className="w-16 text-base text-[#84a98c] font-medium">
                           {formData.hma ? 'Ναι' : ''}
                         </div>
                       </div>
@@ -687,12 +775,12 @@ const customStyles = `
                   </div>
                   
                   <div className="mt-4">
-                    <label className="block text-base font-bold mb-2 text-[#111827]">Βεβαίωση</label>
+                    <label className="block text-base font-normal mb-2 text-[#84a98c]">Βεβαίωση</label>
                     <input 
                       type="text" 
                       name="certificate"
-                      className="form-input w-full p-3 rounded text-base bg-[#ffffff] text-[#111827]"
-                      style={{border: '1px solid #e5e7eb', boxShadow: 'none'}}
+                      className="form-input w-full p-3 rounded text-base bg-[#354f52] text-[#cad2c5]"
+                      style={{border: '1px solid #52796f', boxShadow: 'none'}}
                       placeholder="Επιθυμητή Βεβαίωση: Ναι / Όχι / Άλλο"
                       value={formData.certificate}
                       onChange={handleInputChange}
@@ -700,7 +788,12 @@ const customStyles = `
                   </div>
                   
                   {validationErrors.loading && (
-                    <div className="mt-4 text-red-500 text-sm">* {validationErrors.loading}</div>
+                    <div className="mt-4 text-red-500 text-sm" style={errorStyle}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      {validationErrors.loading}
+                    </div>
                   )}
                 </div>
               )}
@@ -708,43 +801,52 @@ const customStyles = `
               {/* Step 4 - Preview */}
               {currentStep === 3 && (
                 <div className="space-y-6">
-                  <h2 className="text-lg sm:text-xl font-bold text-[#111827] mt-0 mb-4 sm:mb-6">Προεπισκόπηση</h2>
-                  <p className="text-[#111827] text-base font-bold">Παρακαλώ επιβεβαιώστε τα στοιχεία πριν την υποβολή.</p>
+                  <div className="text-lg sm:text-xl font-bold mt-0 mb-4 sm:mb-6">
+                    <span style={{ color: '#84a98c', fontWeight: 'bold' }}>Προεπισκόπηση</span>
+                  </div>
+                  <p className="text-[#84a98c] text-base font-normal">Παρακαλώ επιβεβαιώστε τα στοιχεία πριν την υποβολή.</p>
                   
-                  <div className="p-4 rounded bg-[#ffffff]" style={{border: '1px solid #e5e7eb'}}>
-                    <h3 className="text-md font-bold text-[#111827] mb-3">Σύνοψη Προσφοράς</h3>
-                    <div className="space-y-3 text-[#111827] text-base">
+                  <div className="p-4 rounded bg-[#354f52]" style={{border: '1px solid #52796f'}}>
+                    <div className="text-md font-bold mb-3">
+                      <span style={{ color: '#84a98c', fontWeight: 'bold' }}>Σύνοψη Προσφοράς</span>
+                    </div>
+                    <div className="space-y-3 text-[#cad2c5] text-base">
                       <div>
-                        <span className="font-bold">Πελάτης:</span> {formData.customerName}
+                        <span className="font-normal text-[#84a98c]">Πελάτης:</span> {formData.customerName}
                       </div>
                       <div>
-                        <span className="font-bold">Διεύθυνση:</span> {formData.address || "-"}, {formData.postalCode || "-"} {formData.city || "-"}
+                        <span className="font-normal text-[#84a98c]">Διεύθυνση:</span> {formData.address || "-"}, {formData.postalCode || "-"} {formData.city || "-"}
                       </div>
                       <div>
-                        <span className="font-bold">Τύπος Αποβλήτου:</span> {formData.wasteType || "-"}
+                        <span className="font-normal text-[#84a98c]">Τύπος Αποβλήτου:</span> {formData.wasteType || "-"}
                       </div>
                       <div>
-                        <span className="font-bold">Μεταφορά από:</span> {formData.whoTransports ? 'Κρόνος' : 'Πελάτη'}
+                        <span className="font-normal text-[#84a98c]">Μεταφορά από:</span> {formData.whoTransports ? 'Κρόνος' : 'Πελάτη'}
                       </div>
                       <div>
-                        <span className="font-bold">Φόρτωση:</span> {formData.loading || "-"}
+                        <span className="font-normal text-[#84a98c]">Φόρτωση:</span> {formData.loading || "-"}
                       </div>
                       <div>
-                        <span className="font-bold">ΗΜΑ:</span> {formData.hma ? 'Ναι' : 'Όχι'}
+                        <span className="font-normal text-[#84a98c]">ΗΜΑ:</span> {formData.hma ? 'Ναι' : 'Όχι'}
                       </div>
                       <div>
-                        <span className="font-bold">Βεβαίωση:</span> {formData.certificate || "-"}
+                        <span className="font-normal text-[#84a98c]">Βεβαίωση:</span> {formData.certificate || "-"}
                       </div>
                       <div>
-                        <span className="font-bold">Πηγή:</span> {formData.source}
+                        <span className="font-normal text-[#84a98c]">Πηγή:</span> {formData.source}
                       </div>
                     </div>
                   </div>
                   
                   <div className="mt-8">
                     <label className="flex items-center space-x-2 cursor-pointer">
-                      <input type="checkbox" className="h-5 w-5 rounded accent-[#22c55e]" />
-                      <span className="text-[#111827] text-base font-bold">Συμφωνώ με την υποβολή των παραπάνω στοιχείων</span>
+                      <input 
+                        type="checkbox" 
+                        className="h-5 w-5 rounded accent-[#22c55e]" 
+                        checked={agreementChecked}
+                        onChange={handleAgreementChange}
+                      />
+                      <span className="text-[#84a98c] text-base font-normal">Συμφωνώ με την υποβολή των παραπάνω στοιχείων</span>
                     </label>
                   </div>
                   
@@ -756,54 +858,86 @@ const customStyles = `
             {/* Custom horizontal line that connects to vertical line - adjust for mobile */}
             <div className="relative h-8 sm:h-12">
               {/* This element creates a combined effect to ensure perfect alignment - hide on mobile */}
-              <div className="absolute hidden md:block w-[102px] h-[1px] bg-[#e5e7eb]" style={{ left: "-102px", top: "50%" }}></div>
-              <div className="absolute h-[1px] bg-[#e5e7eb]" style={{ 
-                left: "0", 
-                right: "-24px", /* Extend to match the top line */
-                top: "50%" 
-              }}></div>
+              <div 
+                className="absolute hidden md:block" 
+                style={{ 
+                  left: "-70px", 
+                  top: "50%",
+                  height: "0px",
+                  width: "70px",
+                  border: "none",
+                  borderTop: "1px solid #52796f"
+                }}
+              ></div>
+              <div 
+                className="absolute" 
+                style={{ 
+                  left: "0", 
+                  right: "-10px",
+                  top: "50%",
+                  height: "0px",
+                  border: "none",
+                  borderTop: "1px solid #52796f"
+                }}
+              ></div>
             </div>
             
-            {/* Navigation buttons */}
-            <div className="flex justify-between">
-              <button
-                onClick={handlePrev}
-                disabled={currentStep === 0}
-                className={`px-3 py-2 sm:px-4 sm:py-2 text-sm border-2 rounded transition-colors ${
-                  currentStep === 0 
-                    ? 'bg-gray-100 text-gray-500 cursor-not-allowed border-transparent' 
-                    : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
-                }`}
-                style={{
-                  backgroundColor: currentStep === 0 ? '#f3f4f6' : '#ffffff',
-                  color: currentStep === 0 ? '#6b7280' : '#111827',
-                  borderColor: currentStep === 0 ? 'transparent' : '#e5e7eb'
-                }}
-              >
-                Προηγούμενο
-              </button>
+            {/* Buttons for navigating between form steps */}
+            <div className="flex justify-between mt-8">
+              {/* Previous button - only show if not on first step */}
+              {currentStep > 0 && (
+                <button
+                  onClick={handlePrev}
+                  className="px-6 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  style={{
+                    backgroundColor: "#354f52",
+                    color: "#cad2c5",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Προηγούμενο
+                </button>
+              )}
               
+              {/* Next/Submit button */}
               <button
                 onClick={currentStep === steps.length - 1 ? handleSubmit : handleNext}
                 disabled={
                   (currentStep === 0 && !formData.address) || 
                   (currentStep === 1 && !formData.wasteType) || 
-                  (currentStep === 2 && !formData.loading)
+                  (currentStep === 2 && !formData.loading) ||
+                  (currentStep === steps.length - 1 && !agreementChecked)
                 }
-                className={`px-3 py-2 sm:px-4 sm:py-2 text-sm rounded border-2 transition-colors ${
-                  (currentStep === 0 && !formData.address) || 
-                  (currentStep === 1 && !formData.wasteType) || 
-                  (currentStep === 2 && !formData.loading)
-                    ? 'opacity-40 cursor-not-allowed'
-                    : ''
-                }`}
+                className="px-6 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ml-auto"
                 style={{
-                  backgroundColor: '#22c55e',
-                  color: '#ffffff',
-                  borderColor: '#22c55e'
+                  backgroundColor: "#22c55e",
+                  color: "#000000",
+                  opacity: (currentStep === 0 && !formData.address) || 
+                          (currentStep === 1 && !formData.wasteType) || 
+                          (currentStep === 2 && !formData.loading) ||
+                          (currentStep === steps.length - 1 && !agreementChecked)
+                            ? "0.5"
+                            : "1",
+                  cursor: (currentStep === 0 && !formData.address) || 
+                          (currentStep === 1 && !formData.wasteType) || 
+                          (currentStep === 2 && !formData.loading) ||
+                          (currentStep === steps.length - 1 && !agreementChecked)
+                            ? "not-allowed"
+                            : "pointer",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                 }}
               >
-                {currentStep === steps.length - 1 ? 'Υποβολή' : 'Επόμενο'}
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center">
+                    <div className="w-4 h-4 mr-2 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+                    Επεξεργασία...
+                  </div>
+                ) : currentStep === steps.length - 1 ? (
+                  "Υποβολή"
+                ) : (
+                  "Επόμενο"
+                )}
               </button>
             </div>
           </div>

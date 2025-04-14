@@ -23,10 +23,9 @@
     /* Paths */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@stepper/*": ["./stepper-package/src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "stepper-package/src"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -1,8 +1,4 @@
-import { supabase as projectSupabase } from '@/lib/supabase'; // Using your project's path
-// @ts-ignore: Type is used for type checking
-import type { Database } from '@stepper/types/supabase';
-// @ts-ignore: Used for documentation
-import { createClient } from '@supabase/supabase-js';
+import { supabase as projectSupabase } from '../lib/supabase';
 
 // Re-export your project's client to avoid duplicate instances
 export const supabase = projectSupabase;

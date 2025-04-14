@@ -1,30 +1,33 @@
-// @ts-ignore: React is used for JSX
-import * as React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import FormPage from './pages/FormPage';
-import HomePage from './pages/HomePage';
-import StepperFormPage from './pages/StepperFormPage'; // Add this import
+import './styles/index.css'
+import StepperForm from './pages/stepper-form'
+
+// Force the background color
+const appStyles = {
+  backgroundColor: '#2f3e46',
+  color: '#cad2c5',
+  minHeight: '100vh',
+  padding: '1rem'
+};
+
+const cardStyles = {
+  backgroundColor: '#354f52',
+  border: '1px solid #52796f',
+  color: '#cad2c5',
+  borderRadius: '0.5rem',
+  padding: '1.5rem',
+  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+};
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/form/:token" element={<FormPage />} />
-        <Route path="/stepper-form" element={<StepperFormPage />} /> {/* Add this route */}
-        <Route path="*" element={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Page Not Found</h1>
-              <p className="text-gray-600">
-                The page you are looking for does not exist.
-              </p>
-            </div>
-          </div>
-        } />
-      </Routes>
-    </BrowserRouter>
-  );
+    <div style={appStyles} className="app-container">
+      <div className="max-w-4xl mx-auto">
+        <div style={cardStyles}>
+          <StepperForm />
+        </div>
+      </div>
+    </div>
+  )
 }
 
-export default App;
+export default App 

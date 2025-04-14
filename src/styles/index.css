@@ -1,0 +1,7 @@
+@import './base.css';
+@import './components.css';
+@import './forms.css';
+@import './animations.css';
+@import './utilities.css';
+
+/* All other styles have been moved to their respective files in the src/styles directory */ 

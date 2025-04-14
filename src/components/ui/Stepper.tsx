@@ -1,84 +1,70 @@
-import React from 'react';
+// @ts-ignore: React is used for JSX
+import * as React from 'react';
 
-export interface Step {
-  title: string;
-  description: string;
+/**
+ * Utility function to conditionally join classNames together
+ */
+export function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
 }
 
 interface StepperProps {
-  steps: Step[];
+  steps: string[];
   currentStep: number;
+  className?: string;
 }
 
-export const Stepper: React.FC<StepperProps> = ({ steps, currentStep }) => {
+export function Stepper({ steps, currentStep, className = '' }: StepperProps) {
   return (
-    <div className="mb-8">
-      <div className="flex justify-between">
-        {steps.map((step, index) => {
-          const isActive = currentStep === index;
-          const isCompleted = currentStep > index;
-          const isLast = index === steps.length - 1;
-          
-          return (
-            <div key={index} className="flex flex-col items-center relative">
-              {/* Step connector line */}
-              {!isLast && (
-                <div className="absolute top-4 w-full flex items-center justify-center">
-                  <div 
-                    className={`h-0.5 w-full ${
-                      isCompleted ? 'bg-blue-500' : 'bg-gray-300'
-                    }`}
-                  />
-                </div>
-              )}
-              
-              {/* Step circle */}
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center relative z-10 ${
-                  isActive
-                    ? 'bg-blue-500 text-white'
-                    : isCompleted
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-500'
-                }`}
+    <div className={cn("w-full", className)}>
+      <div className="flex flex-col">
+        {steps.map((step, index) => (
+          <div key={index} className="flex items-start mb-12 last:mb-0 relative">
+            {/* Vertical line */}
+            {index < steps.length - 1 && (
+              <div className="absolute top-7 left-[10px] w-0.5 h-[calc(100%+14px)] bg-[#e5e7eb]">
+                <div 
+                  className={cn(
+                    "absolute top-0 left-0 w-full bg-app-success",
+                    index < currentStep ? "h-full" : "h-0"
+                  )}
+                />
+              </div>
+            )}
+            
+            {/* Circle dot with label */}
+            <div className="flex items-center z-10">
+              <div 
+                className={cn(
+                  "w-6 h-6 rounded-full flex-shrink-0 border-2 flex items-center justify-center",
+                  index < currentStep
+                    ? "bg-app-success border-app-success" // Completed
+                    : index === currentStep
+                      ? "bg-app-success border-app-success" // Current
+                      : "bg-app-bg-secondary border-app-border-primary" // Future
+                )}
               >
-                {isCompleted ? (
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M5 13l4 4L19 7" 
-                    />
+                {index < currentStep && (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-app-bg-primary" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                ) : (
-                  <span>{index + 1}</span>
                 )}
               </div>
               
-              {/* Step title and description */}
-              <div className="text-center mt-2">
-                <p 
-                  className={`text-sm font-medium ${
-                    isActive || isCompleted ? 'text-blue-500' : 'text-gray-500'
-                  }`}
-                >
-                  {step.title}
-                </p>
-                <p className="text-xs text-gray-500 mt-1 hidden md:block">
-                  {step.description}
-                </p>
+              <div className={cn(
+                "ml-4 text-sm",
+                index === currentStep 
+                  ? "text-[#84a98c] font-bold"
+                  : index < currentStep 
+                    ? "text-[#84a98c] font-normal" 
+                    : "text-[#6b7280] font-normal"
+              )}>
+                {step}
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
-};
+} 
