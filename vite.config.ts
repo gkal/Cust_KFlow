@@ -6,9 +6,24 @@ import { config } from 'dotenv'
 // Load environment variables from .env files
 config();
 
+// Create a plugin to replace environment variables in index.html
+function htmlEnvPlugin() {
+  return {
+    name: 'html-env-plugin',
+    transformIndexHtml(html: string) {
+      return html
+        .replace(/%VITE_SUPABASE_URL%/g, process.env.VITE_SUPABASE_URL || '')
+        .replace(/%VITE_SUPABASE_ANON_KEY%/g, process.env.VITE_SUPABASE_ANON_KEY || '');
+    }
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    htmlEnvPlugin()
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')

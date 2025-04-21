@@ -19,6 +19,12 @@
         min-height: 100vh;
       }
     </style>
+    <script>
+      window.env = {
+        VITE_SUPABASE_URL: "%VITE_SUPABASE_URL%",
+        VITE_SUPABASE_ANON_KEY: "%VITE_SUPABASE_ANON_KEY%"
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>
