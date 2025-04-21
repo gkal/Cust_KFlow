@@ -42,14 +42,8 @@ export const useStepperForm = ({
     customerName,
     submitForm,
     isSubmitting,
-    isValid,
     token
   } = useFormContext();
-  
-  // Log critical information
-  useEffect(() => {
-    console.log('Stepper form initialized with customer:', { customerId, customerName, isValid });
-  }, [customerId, customerName, isValid]);
   
   // Validate step bounds
   useEffect(() => {
@@ -108,12 +102,10 @@ export const useStepperForm = ({
   
   const completeForm = useCallback(async (data: Record<string, any>): Promise<boolean> => {
     if (!customerId) {
-      console.error('Cannot submit form: No customer ID available');
       return false;
     }
     
     if (!token) {
-      console.error('Cannot submit form: No form token available');
       return false;
     }
     
@@ -123,8 +115,6 @@ export const useStepperForm = ({
       ...data,
       customerId
     };
-    
-    console.log('Submitting form with data:', finalData);
     
     // Call the onComplete callback with the complete data
     onComplete?.(finalData);
