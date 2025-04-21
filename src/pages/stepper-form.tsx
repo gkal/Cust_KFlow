@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Stepper } from '../components/ui/Stepper';
 import { z } from 'zod';
 import { useFormContext } from '../lib/hooks/useFormContext';
+import { sendFormSubmissionNotification } from '../lib/services/emailApiService';
 
 // Import only necessary styles
 import '../styles/index.css';
@@ -101,7 +102,6 @@ export default function StepperForm() {
   useEffect(() => {
     // Reset form submission status when a new customer token is detected
     if (customerId) {
-      console.log('New customer detected, resetting form state:', customerId);
       setFormSubmitted(false);
       sessionStorage.removeItem('form_submitted');
     }
@@ -176,34 +176,6 @@ export default function StepperForm() {
     });
   };
   
-  // Create a new offer
-  // @ts-ignore: Preserved for future functionality
-  const startNewOffer = () => {
-    // Clear submission state in session storage
-    sessionStorage.removeItem('form_submitted');
-    
-    // Reset form
-    setFormSubmitted(false);
-    setCurrentStep(0);
-    setFormData({
-      customerName: customerName || "",
-      customerEmail: "",
-      source: "Email",
-      address: "",
-      postalCode: "",
-      city: "",
-      wasteType: "",
-      whoTransports: true,
-      loading: "",
-      hma: false,
-      certificate: ""
-    });
-    setValidationErrors({});
-    
-    // Replace the current state to prevent going back to thank you page
-    window.history.replaceState({ formStep: 'new' }, '', window.location.pathname);
-  };
-  
   // Update form data with validation
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -266,7 +238,6 @@ export default function StepperForm() {
     } catch (error) {
       if (error instanceof z.ZodError) {
         // Handle validation errors
-        console.error('Validation error:', error.errors);
         return false;
       }
       return false;
@@ -302,6 +273,8 @@ export default function StepperForm() {
     const formDataToSubmit = {
       ...formData,
       customerId: customerId || '',
+      requirements: '',
+      comments: '',
       timestamp: new Date().toISOString()
     };
     
@@ -314,29 +287,15 @@ export default function StepperForm() {
         timestamp: new Date()
       };
       
-      // Log submission data for debugging
-      console.log('Submitting form with data:', formDataToSubmit);
-      console.log('Email notification data:', emailData);
-      
       // Submit to your API
       const success = await submitForm('submitted', formDataToSubmit);
       
       if (success) {
-        // Import the email service to send directly
+        // Send email notification
         try {
-          console.log('Sending email notification via EmailJS');
-          const emailService = await import('../lib/services/emailApiService').then(module => module.default);
-          
-          // Send the email using our email service
-          const emailResult = await emailService.sendFormSubmissionNotification(emailData);
-          
-          if (emailResult && emailResult.success) {
-            console.log('Email notification sent successfully', emailResult);
-          } else {
-            console.warn('Email notification failed but form was submitted', emailResult);
-          }
+          // Send the email using the imported email service
+          await sendFormSubmissionNotification(emailData);
         } catch (emailError) {
-          console.error('Failed to send email notification:', emailError);
           // Don't show error to user since the form was successfully submitted
         }
         
@@ -350,7 +309,6 @@ export default function StepperForm() {
         throw new Error("Η υποβολή της φόρμας απέτυχε");
       }
     } catch (error) {
-      console.error('Form submission error:', error);
       showDialog(
         "Σφάλμα Υποβολής",
         "Υπήρξε ένα πρόβλημα κατά την υποβολή της φόρμας σας. Παρακαλώ δοκιμάστε ξανά αργότερα.",

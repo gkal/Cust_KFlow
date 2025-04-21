@@ -49,9 +49,6 @@ export const FormProvider: React.FC<{
   const [validationComplete, setValidationComplete] = useState(false);
   const firstRenderRef = useRef(true);
   const redirectedRef = useRef(false);
-  const isLikelyValidTokenRef = useRef(
-    token && token.length > 10 && /^[A-Za-z0-9]+/.test(token.split('?')[0])
-  );
   
   const {
     isLoading,
@@ -64,17 +61,7 @@ export const FormProvider: React.FC<{
     expiredAt
   } = useFormValidation({ 
     token,
-    onValidationComplete: (result) => {
-      // Only log detailed results for likely valid tokens or on success
-      if (isLikelyValidTokenRef.current || result.isValid) {
-        console.log('Validation completed with final result:', { 
-          isValid: result.isValid, 
-          error: result.error,
-          customerId: result.customerId,
-          submittedAt: result.submittedAt,
-          expiredAt: result.expiredAt
-        });
-      }
+    onValidationComplete: () => {
       setValidationComplete(true);
     }
   });
@@ -93,10 +80,6 @@ export const FormProvider: React.FC<{
   useEffect(() => {
     if (firstRenderRef.current) {
       firstRenderRef.current = false;
-      // Only log for likely valid tokens
-      if (isLikelyValidTokenRef.current) {
-        console.log('Initial form context setup with token:', token);
-      }
     }
   }, [token]);
   
@@ -119,15 +102,6 @@ export const FormProvider: React.FC<{
         redirectOnInvalid && 
         !redirectedRef.current && 
         !shouldShowCustomError) {
-      // Only log detailed error for likely valid tokens
-      if (isLikelyValidTokenRef.current) {
-        console.log('Redirecting due to invalid form token:', { 
-          error, 
-          isValid, 
-          validationComplete,
-          shouldShowCustomError
-        });
-      }
       redirectedRef.current = true;
       navigate(redirectPath, { replace: true });
     }
@@ -141,22 +115,6 @@ export const FormProvider: React.FC<{
       await validateToken(token);
     }
   };
-  
-  // Log validation state changes - only once per significant change and only for valid looking tokens
-  useEffect(() => {
-    if (!firstRenderRef.current && validationComplete && isLikelyValidTokenRef.current) {
-      console.log('Form validation state:', { 
-        isValid, 
-        isLoading, 
-        token, 
-        customerId, 
-        customerName, 
-        error,
-        validationComplete,
-        redirected: redirectedRef.current
-      });
-    }
-  }, [isValid, isLoading, token, customerId, customerName, error, validationComplete]);
   
   return (
     <FormContext.Provider value={{

@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import { FormProvider, useFormContext } from '../lib/hooks/useFormContext';
 import { ValidationError } from './ui/ValidationError';
 import { ValidationLoading } from './ui/ValidationLoading';
+import { sendExpiredLinkNotification } from '../lib/services/emailApiService';
 
 interface FormWrapperProps {
   children: React.ReactNode;
@@ -25,32 +26,30 @@ const FormContent: React.FC<FormContentProps> = ({ children }) => {
     customerName,
     customerId,
     submittedAt,
-    expiredAt
+    expiredAt,
+    token
   } = useFormContext();
   
-  const loggedRef = useRef(false);
-  const prevStateRef = useRef({ isLoading, isValid });
+  const emailSentRef = useRef(false);
 
-  // Debug output - only log when state actually changes
+  // Send email notification when an expired link is detected
   useEffect(() => {
-    const prevState = prevStateRef.current;
-    const stateChanged = prevState.isLoading !== isLoading || prevState.isValid !== isValid;
+    const isExpirationError = error?.includes('έχει λήξει');
     
-    if (!loggedRef.current || stateChanged) {
-      console.log('FormContent state:', { 
-        isLoading, 
-        isValid, 
-        error, 
-        customerName,
+    if (!isLoading && !isValid && isExpirationError && expiredAt && !emailSentRef.current && token) {
+      // Send the notification email
+      sendExpiredLinkNotification({
         customerId,
-        submittedAt,
-        expiredAt
+        customerName,
+        expiredAt,
+        currentTime: new Date(),
+        token
       });
       
-      loggedRef.current = true;
-      prevStateRef.current = { isLoading, isValid };
+      // Mark as sent to prevent duplicate emails
+      emailSentRef.current = true;
     }
-  }, [isLoading, isValid, error, customerName, customerId, submittedAt, expiredAt]);
+  }, [isLoading, isValid, error, expiredAt, customerId, customerName, token]);
 
   if (isLoading) {
     return <ValidationLoading />;
@@ -87,7 +86,6 @@ export const FormWrapper: React.FC<FormWrapperProps> = ({
   // Get token from URL parameters
   const { token: pathToken } = useParams<{ token: string }>();
   const location = useLocation();
-  const processedTokenRef = useRef<string | null>(null);
   
   // Create the full token only once to prevent re-renders
   const fullTokenRef = useRef<string | null>(null);
@@ -96,21 +94,6 @@ export const FormWrapper: React.FC<FormWrapperProps> = ({
   }
   
   const fullToken = fullTokenRef.current || '';
-  
-  // Debug the token from params - only log when token changes
-  useEffect(() => {
-    if (processedTokenRef.current !== fullToken) {
-      // Only log if token appears to be valid
-      if (fullToken && fullToken.length > 10) {
-        console.log('FormWrapper: Processing token:', { 
-          pathToken,
-          search: location.search,
-          fullToken 
-        });
-      }
-      processedTokenRef.current = fullToken;
-    }
-  }, [pathToken, location.search, fullToken]);
 
   return (
     <FormProvider

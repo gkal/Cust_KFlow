@@ -32,13 +32,6 @@ export const useFormValidation = ({
   const validatedTokenRef = useRef<string | null>(null);
   const isValidatingRef = useRef<boolean>(false);
 
-  // Helper to determine if a token looks potentially valid
-  const isLikelyValidToken = (tokenToCheck: string | null): boolean => {
-    if (!tokenToCheck) return false;
-    const cleanToken = tokenToCheck.split('?')[0];
-    return cleanToken.length > 10 && /^[A-Za-z0-9]+$/.test(cleanToken);
-  };
-
   const validateToken = useCallback(async (tokenToValidate: string): Promise<ValidationResult> => {
     // Prevent duplicate validations of the same token
     if (validatedTokenRef.current === tokenToValidate || isValidatingRef.current) {
@@ -61,21 +54,11 @@ export const useFormValidation = ({
     try {
       const validationResult = await FormValidationService.validateFormToken(tokenToValidate);
       
-      // Only log for likely valid tokens or successful validations
-      if (isLikelyValidToken(tokenToValidate) || validationResult.isValid) {
-        console.log('Validation result:', validationResult);
-      }
-      
       setResult(validationResult);
       validatedTokenRef.current = tokenToValidate;
       onValidationComplete?.(validationResult);
       return validationResult;
     } catch (error) {
-      // Only log errors for likely valid tokens
-      if (isLikelyValidToken(tokenToValidate)) {
-        console.error('Validation error:', error);
-      }
-      
       const errorResult: ValidationResult = {
         isValid: false,
         error: 'Failed to validate token'

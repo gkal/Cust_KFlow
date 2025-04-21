@@ -10,6 +10,15 @@ interface FormSubmissionData {
   timestamp: Date;
 }
 
+// Interface for expired link data
+interface ExpiredLinkData {
+  customerId?: string;
+  customerName?: string;
+  expiredAt: string;
+  currentTime: Date;
+  token: string;
+}
+
 // Safely access environment variables
 const getEnvVariable = (key: string, fallback: string): string => {
   if (typeof window !== 'undefined') {
@@ -34,16 +43,6 @@ const EMAILJS_CONFIG = {
 
 // Initialize EmailJS
 emailjs.init(EMAILJS_CONFIG.USER_ID);
-
-// Debug logging function
-const logDebug = (message: string, data?: any) => {
-  console.log(`[EmailService] ${message}`, data ? data : '');
-};
-
-// Error logging function
-const logError = (message: string, error: any) => {
-  console.error(`[EmailService ERROR] ${message}`, error);
-};
 
 // Helper function to format date in full Greek format
 function formatGreekFullDate(date: Date): string {
@@ -84,9 +83,6 @@ function formatGreekFullDate(date: Date): string {
  */
 export const sendFormSubmissionNotification = async (data: FormSubmissionData) => {
   try {
-    // Log what we're sending
-    logDebug('Sending form submission notification');
-    
     // Get the notification recipients, with fallback if emailConfig is undefined or empty
     let recipients = 'gkaloforidis@yahoo.com';
     try {
@@ -94,10 +90,8 @@ export const sendFormSubmissionNotification = async (data: FormSubmissionData) =
         recipients = emailConfig.notificationRecipients.join(',');
       }
     } catch (e) {
-      logDebug('Could not get notification recipients from config, using fallback');
+      // Use fallback recipient
     }
-    
-    logDebug(`Sending to: ${recipients}`);
     
     // Create the exact message format requested by the customer
     const fullMessage = `
@@ -126,16 +120,12 @@ export const sendFormSubmissionNotification = async (data: FormSubmissionData) =
       message: fullMessage
     };
 
-    logDebug('Email parameters:', templateParams);
-
     // Send email using EmailJS
     const response = await emailjs.send(
       EMAILJS_CONFIG.SERVICE_ID,
       EMAILJS_CONFIG.FORM_TEMPLATE_ID,
       templateParams
     );
-
-    logDebug('Email sent successfully', response);
     
     return { 
       messageId: `emailjs-${Date.now()}`, 
@@ -143,8 +133,73 @@ export const sendFormSubmissionNotification = async (data: FormSubmissionData) =
       response
     };
   } catch (error) {
-    logError('Failed to send form submission notification', error);
+    // Return a fallback response so the app doesn't break
+    return { 
+      messageId: `mock-fallback-${Date.now()}`, 
+      success: false,
+      fallback: true,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+};
+
+/**
+ * Send notification when a user attempts to access an expired link
+ */
+export const sendExpiredLinkNotification = async (data: ExpiredLinkData) => {
+  try {
+    // Get the notification recipients, with fallback if emailConfig is undefined or empty
+    let recipients = 'gkaloforidis@yahoo.com';
+    try {
+      if (emailConfig && emailConfig.notificationRecipients && emailConfig.notificationRecipients.length > 0) {
+        recipients = emailConfig.notificationRecipients.join(',');
+      }
+    } catch (e) {
+      // Use fallback recipient
+    }
     
+    // Create the message for expired link notification
+    const expiredDate = new Date(data.expiredAt);
+    const fullMessage = `
+Προσπάθεια χρήσης ληγμένου συνδέσμου
+
+Πελάτης: ${data.customerName || 'Μη διαθέσιμο'}
+ID Πελάτη: ${data.customerId || 'Μη διαθέσιμο'}
+Token Συνδέσμου: ${data.token}
+
+Ο σύνδεσμος έληξε στις: ${formatGreekFullDate(expiredDate)}
+Η προσπάθεια χρήσης έγινε στις: ${formatGreekFullDate(data.currentTime)}
+
+Ο πελάτης προσπάθησε να χρησιμοποιήσει τον σύνδεσμο μετά τη λήξη του.
+Ίσως θα θέλατε να επικοινωνήσετε μαζί του για να δημιουργήσετε έναν νέο σύνδεσμο.
+    `;
+    
+    // Prepare template parameters
+    const templateParams = {
+      to_name: 'Administrator',
+      to_email: recipients,
+      from_name: emailConfig.senderName,
+      title: `${emailConfig.subjects.expiredLink}${data.customerName ? ' - ' + data.customerName : ''}`,
+      customer_name: data.customerName || 'Μη διαθέσιμο',
+      customer_email: '',
+      customer_phone: '',
+      submission_time: data.currentTime.toLocaleString('el-GR'),
+      message: fullMessage
+    };
+
+    // Send email using EmailJS
+    const response = await emailjs.send(
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.FORM_TEMPLATE_ID,
+      templateParams
+    );
+    
+    return { 
+      messageId: `emailjs-${Date.now()}`, 
+      success: true,
+      response
+    };
+  } catch (error) {
     // Return a fallback response so the app doesn't break
     return { 
       messageId: `mock-fallback-${Date.now()}`, 
@@ -156,5 +211,6 @@ export const sendFormSubmissionNotification = async (data: FormSubmissionData) =
 };
 
 export default {
-  sendFormSubmissionNotification
+  sendFormSubmissionNotification,
+  sendExpiredLinkNotification
 }; 

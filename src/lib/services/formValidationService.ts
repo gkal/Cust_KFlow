@@ -39,16 +39,6 @@ export const FormValidationService = {
       // Extract token from possible query parameters format
       const cleanToken = token.split('?')[0];
       
-      // Skip logging for obviously invalid tokens to reduce console noise
-      const isLikelyValid = cleanToken && cleanToken.length > 10 && /^[A-Za-z0-9]+$/.test(cleanToken);
-      
-      if (isLikelyValid) {
-        console.log('Processing token validation:', { 
-          originalToken: token, 
-          cleanToken 
-        });
-      }
-      
       // Validate token format (should be alphanumeric)
       if (!cleanToken || !/^[A-Za-z0-9]+$/.test(cleanToken)) {
         // Don't log this as an error for obvious invalid tokens
@@ -67,10 +57,6 @@ export const FormValidationService = {
         .single();
       
       if (error || !formLink) {
-        // Only log as error if this seems like it should have been a valid token
-        if (isLikelyValid) {
-          console.log('Form link not found for token:', cleanToken);
-        }
         return {
           isValid: false,
           error: 'Invalid form link or link not found'
@@ -79,7 +65,6 @@ export const FormValidationService = {
       
       // Check if the form link has expired
       if (new Date(formLink.expires_at) < new Date()) {
-        console.log('Form link expired:', formLink.expires_at);
         const formattedDate = formatGreekDate(formLink.expires_at);
         return {
           isValid: false,
@@ -90,8 +75,6 @@ export const FormValidationService = {
       
       // Check if the form has already been used
       if (formLink.is_used) {
-        console.log('Form link already used:', formLink.token);
-        
         // Format submission date if available, otherwise use updated date
         const submissionDate = formLink.submitted_at || formLink.updated_at;
         const formattedDate = formatGreekDate(submissionDate);
@@ -112,18 +95,11 @@ export const FormValidationService = {
         .single();
       
       if (customerError || !customer) {
-        console.error('Customer not found:', customerError);
         return {
           isValid: false,
           error: 'Customer information not found'
         };
       }
-      
-      // Log successful validation
-      console.log('Form token validated successfully:', {
-        customerId: customer.id,
-        customerName: customer.company_name
-      });
       
       return {
         isValid: true,
@@ -131,7 +107,6 @@ export const FormValidationService = {
         customerName: customer.company_name
       };
     } catch (error) {
-      console.error('Error validating form token:', error);
       return {
         isValid: false,
         error: 'An unexpected error occurred during validation'

@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "devCommand": "npm run dev",
+  "outputDirectory": "dist",
+  "regions": ["fra1"],
+  "github": {
+    "silent": true
+  }
+} 

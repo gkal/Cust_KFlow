@@ -10,8 +10,3 @@ pnpm run build
 
 
 pnpm run serve
-
-
-resend
-
-re_hf3QE3rC_PysybGnnKohDEd4c9z2uq5Ag

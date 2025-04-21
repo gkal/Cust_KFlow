@@ -39,6 +39,7 @@ export const emailConfig = {
   // Email subjects
   subjects: {
     formSubmission: 'Πραγματοποιήθηκε Αποστολή Φόρμας από πελάτη',
+    expiredLink: 'Προσπάθεια χρήσης ληγμένου συνδέσμου από πελάτη',
     notFound: 'Σελίδα Δεν Βρέθηκε'
   }
 };

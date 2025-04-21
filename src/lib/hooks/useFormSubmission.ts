@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FormLinkService } from '../services/formLinkService';
 import { FormLinkStatus } from '../../types/validation';
+import { supabase } from '../supabaseClient';
 
 interface UseFormSubmissionProps {
   onSuccess?: () => void;
@@ -44,10 +45,38 @@ export const useFormSubmission = ({
     setError(null);
     
     try {
-      // Here you would typically save the form data to your database first
-      // This is a placeholder for where you would save the actual form data
+      // Save form data to the database
       if (data) {
-        console.log('Form data to be saved:', data);
+        // Default system user ID - using a known valid UUID from the database
+        const systemUserId = "84045ca4-07c7-42b4-a025-97534bc35839";
+        
+        // Create offer data record in the offers table
+        const { error: insertError } = await supabase
+          .from('offers')
+          .insert({
+            customer_id: data.customerId,
+            source: data.source || 'Form',
+            created_by: systemUserId, // Using a valid UUID instead of 'system' string
+            waste_type: data.wasteType,
+            address: data.address,
+            tk: data.postalCode,
+            town: data.city,
+            who_transport: data.whoTransports,
+            loading: data.loading,
+            hma: data.hma,
+            certificate: data.certificate,
+            requirements: data.requirements || '',
+            customer_comments: data.comments || '',
+            created_at: data.timestamp || new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            deleted: false
+          });
+          
+        if (insertError) {
+          setError('Failed to save offer data');
+          onError?.('Failed to save offer data');
+          return false;
+        }
       }
       
       // Then update the form link status
