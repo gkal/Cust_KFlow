@@ -155,38 +155,6 @@ export const sendFormSubmissionNotification = async (data: FormSubmissionData) =
   }
 };
 
-export const testEmailService = async () => {
-  try {
-    const testFormData = {
-      customerName: "Δοκιμαστικός Πελάτης",
-      customerEmail: "test@example.com",
-      customerPhone: "123-456-7890",
-      formData: {
-        field1: "Δοκιμαστική τιμή 1",
-        field2: "Δοκιμαστική τιμή 2",
-        testArray: ["στοιχείο 1", "στοιχείο 2", "στοιχείο 3"],
-        testObject: { key1: "τιμή 1", key2: "τιμή 2" },
-        emptyField: "",
-        nullField: null,
-        emptyArray: []
-      },
-      timestamp: new Date()
-    };
-
-    console.log("📧 Testing email service with data:", testFormData);
-    const result = await sendFormSubmissionNotification(testFormData);
-    console.log("📧 Email test result:", result);
-    return result;
-  } catch (error) {
-    console.error("📧 Email test failed:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    };
-  }
-};
-
 export default {
-  sendFormSubmissionNotification,
-  testEmailService
+  sendFormSubmissionNotification
 }; 
