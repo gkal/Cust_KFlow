@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Stepper } from '../components/ui/Stepper';
-import { supabase, getUserId } from '../lib/supabaseClient';
 import { z } from 'zod';
 import { useFormContext } from '../lib/hooks/useFormContext';
-import { emailConfig } from '../lib/config/emailConfig';
 
 // Import only necessary styles
 import '../styles/index.css';
@@ -30,48 +28,8 @@ const formSchema = z.object({
   certificate: z.string().optional()
 });
 
-// Define submission schema that matches Supabase database
-type OfferInput = {
-  customer_id: string;
-  source: string;
-  created_by: string;
-  waste_type: string;
-  address: string;
-  tk?: string;
-  town?: string;
-  who_transport: boolean;
-  loading: string;
-  hma: boolean;
-  certificate?: string;
-  requirements: string;
-  customer_comments: string;
-  created_at: string;
-  updated_at: string;
-  deleted: boolean;
-}
-
-const submissionSchema = z.object({
-  customer_id: z.string().uuid(),
-  source: z.enum(['Email', 'Phone', 'Site', 'Physical']),
-  created_by: z.string().uuid(),
-  waste_type: z.string(),
-  address: z.string(),
-  tk: z.string().optional(),
-  town: z.string().optional(),
-  who_transport: z.boolean(),
-  loading: z.string(),
-  hma: z.boolean(),
-  certificate: z.string().optional(),
-  requirements: z.string(),
-  customer_comments: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
-  deleted: z.boolean()
-});
-
 // Type inference
 type FormData = z.infer<typeof formSchema>;
-export type SubmissionData = z.infer<typeof submissionSchema>;
 
 export default function StepperForm() {
   const { customerId, customerName, submitForm } = useFormContext();
@@ -328,179 +286,77 @@ export default function StepperForm() {
   };
 
   const handleSubmit = async () => {
-    // Validate the entire form first
-    try {
-      formSchema.parse(formData);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
-        error.errors.forEach(err => {
-          const field = err.path[0].toString();
-          newErrors[field] = err.message;
-        });
-        setValidationErrors(newErrors);
-        console.error('Validation errors:', newErrors);
-        showDialog('Σφάλμα φόρμας', 'Παρακαλώ διορθώστε τα σφάλματα στη φόρμα πριν την υποβολή.', true);
-        return;
-      }
+    // Only check for agreement
+    if (!agreementChecked) {
+      showDialog(
+        "Αποδοχή Όρων Απαιτείται",
+        "Παρακαλώ αποδεχτείτε τους όρους και προϋποθέσεις για να συνεχίσετε.",
+        true
+      );
+      return;
     }
     
-    // Prevent multiple submissions
-    if (isSubmitting) return;
     setIsSubmitting(true);
     
-    console.log('Starting form submission process', { customerId });
+    // Collect customer data for submission
+    const formDataToSubmit = {
+      ...formData,
+      customerId: customerId || '',
+      timestamp: new Date().toISOString()
+    };
     
     try {
-      // TEMPORARILY DISABLED - Insert the data into the offers table
-      /* 
-      const { data, error } = await supabase
-        .from('offers')
-        .insert({
-          customer_id: customerId || '',
-          source: formData.source as 'Email' | 'Phone' | 'Site' | 'Physical',
-          created_by: getUserId(),
-          waste_type: formData.wasteType,
-          address: formData.address,
-          tk: formData.postalCode || undefined,
-          town: formData.city || undefined,
-          who_transport: formData.whoTransports,
-          loading: formData.loading,
-          hma: formData.hma,
-          certificate: formData.certificate || undefined,
-          requirements: '',
-          customer_comments: '',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          deleted: false
-        })
-        .select();
-      
-      if (error) {
-        console.error('Error submitting form:', error);
-        showDialog('Σφάλμα υποβολής', 'Υπήρξε σφάλμα κατά την υποβολή της φόρμας. Παρακαλώ δοκιμάστε ξανά.', true);
-        setIsSubmitting(false);
-        return;
-      }
-      */
-      
-      // Mock successful data insertion for testing
-      const data = {
-        id: '123',
-        customer_id: customerId || '',
-        created_at: new Date().toISOString()
+      // Prepare email data
+      const emailData = {
+        customerName: formData.customerName,
+        customerEmail: formData.customerEmail,
+        formData: formDataToSubmit,
+        timestamp: new Date()
       };
-      console.log('Simulated successful data insertion:', data);
       
-      // Mark the form link as submitted
-      console.log('Data inserted successfully, now marking form as submitted');
-      const submitResult = await submitForm('submitted');
+      // Log submission data for debugging
+      console.log('Submitting form with data:', formDataToSubmit);
+      console.log('Email notification data:', emailData);
       
-      if (!submitResult) {
-        console.error('Error updating form link status');
-        showDialog('Προειδοποίηση', 'Η προσφορά καταχωρήθηκε, αλλά υπήρξε πρόβλημα στην ενημέρωση της κατάστασης του συνδέσμου.', true);
-        // Continue since the form data was saved successfully
-      } else {
-        console.log('Form link status updated successfully to submitted');
-      }
+      // Submit to your API
+      const success = await submitForm('submitted', formDataToSubmit);
       
-      console.log('Form submitted successfully:', data);
-      showDialog('Επιτυχία!', 'Η φόρμα υποβλήθηκε επιτυχώς!', false);
-      
-      // Send email notification via proxy to avoid CORS issues
-      try {
-        console.log('Sending email notification via proxy');
-        
-        // Generate HTML for form fields
-        const formFieldsHtml = Object.entries(formData)
-          .map(([key, value]) => {
-            // Format arrays and objects for better readability
-            let displayValue = value;
-            if (Array.isArray(value)) {
-              displayValue = value.join(', ');
-            } else if (typeof value === 'object' && value !== null) {
-              displayValue = JSON.stringify(value, null, 2);
-            }
-            
-            return `<tr>
-              <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${key}</td>
-              <td style="padding: 8px; border: 1px solid #ddd;">${displayValue}</td>
-            </tr>`;
-          })
-          .join('');
-        
-        // Use fetch with the proxy instead of Resend SDK directly
-        const emailResponse = await fetch('/api/email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: `${emailConfig.senderName} <${emailConfig.senderEmail}>`,
-            to: emailConfig.notificationRecipients,
-            subject: `${emailConfig.subjects.formSubmission}: ${formData.customerName}`,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1 style="color: #52796f; border-bottom: 2px solid #52796f; padding-bottom: 10px;">Νέα Υποβολή Φόρμας</h1>
-                
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                  <h2 style="color: #333; margin-top: 0;">Στοιχεία Πελάτη</h2>
-                  <p><strong>Όνομα:</strong> ${formData.customerName}</p>
-                  <p><strong>Email:</strong> ${formData.customerEmail || 'not-provided@example.com'}</p>
-                  <p><strong>Ημερομηνία Υποβολής:</strong> ${new Date().toLocaleString('el-GR')}</p>
-                </div>
-                
-                <h2 style="color: #333;">Δεδομένα Φόρμας</h2>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                  <thead>
-                    <tr style="background-color: #52796f; color: white;">
-                      <th style="padding: 10px; text-align: left;">Πεδίο</th>
-                      <th style="padding: 10px; text-align: left;">Τιμή</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${formFieldsHtml}
-                  </tbody>
-                </table>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.9em; color: #666;">
-                  <p>Αυτό είναι ένα αυτόματο email από το σύστημα της ιστοσελίδας Kronos.</p>
-                </div>
-              </div>
-            `
-          })
-        });
-        
-        if (emailResponse.ok) {
-          const result = await emailResponse.json();
-          console.log('Email notification sent successfully', result);
-        } else {
-          console.warn('Email notification failed with status:', emailResponse.status);
-          // For debugging purposes
-          try {
-            const errorText = await emailResponse.text();
-            console.warn('Email error response:', errorText);
-          } catch (e) {
-            console.warn('Could not read error response text');
+      if (success) {
+        // Import the email service to send directly
+        try {
+          console.log('Sending email notification via EmailJS');
+          const emailService = await import('../lib/services/emailApiService').then(module => module.default);
+          
+          // Send the email using our email service
+          const emailResult = await emailService.sendFormSubmissionNotification(emailData);
+          
+          if (emailResult && emailResult.success) {
+            console.log('Email notification sent successfully', emailResult);
+          } else {
+            console.warn('Email notification failed but form was submitted', emailResult);
           }
-          console.warn('Email notification failed but form was submitted');
+        } catch (emailError) {
+          console.error('Failed to send email notification:', emailError);
+          // Don't show error to user since the form was successfully submitted
         }
-      } catch (emailError) {
-        console.error('Failed to send email notification:', emailError);
-        // Don't show error to user since the form was successfully submitted
+        
+        showDialog(
+          "Επιτυχής Υποβολή",
+          "Η φόρμα σας υποβλήθηκε επιτυχώς! Θα επικοινωνήσουμε μαζί σας σύντομα.",
+          false
+        );
+        resetForm();
+      } else {
+        throw new Error("Η υποβολή της φόρμας απέτυχε");
       }
-      
-      // Mark form as submitted in session storage
-      sessionStorage.setItem('form_submitted', 'true');
-      
-      // Push a new state to prevent going back to form
-      window.history.pushState({ formSubmitted: true }, '', window.location.pathname);
-      
-      // Reset form to initial state
-      resetForm();
     } catch (error) {
-      console.error('Exception during form submission:', error);
-      showDialog('Σφάλμα υποβολής', 'Υπήρξε σφάλμα κατά την υποβολή της φόρμας. Παρακαλώ δοκιμάστε ξανά.', true);
+      console.error('Form submission error:', error);
+      showDialog(
+        "Σφάλμα Υποβολής",
+        "Υπήρξε ένα πρόβλημα κατά την υποβολή της φόρμας σας. Παρακαλώ δοκιμάστε ξανά αργότερα.",
+        true
+      );
+    } finally {
       setIsSubmitting(false);
     }
   };

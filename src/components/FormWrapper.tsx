@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { FormProvider, useFormContext } from '../lib/hooks/useFormContext';
 import { ValidationError } from './ui/ValidationError';
 import { ValidationLoading } from './ui/ValidationLoading';
@@ -13,12 +13,11 @@ interface FormWrapperProps {
 }
 
 interface FormContentProps {
-  redirectPath: string;
   children: React.ReactNode;
 }
 
 // Inner component that uses the FormContext
-const FormContent: React.FC<FormContentProps> = ({ redirectPath, children }) => {
+const FormContent: React.FC<FormContentProps> = ({ children }) => {
   const { 
     isLoading, 
     isValid, 
@@ -29,7 +28,6 @@ const FormContent: React.FC<FormContentProps> = ({ redirectPath, children }) => 
     expiredAt
   } = useFormContext();
   
-  const navigate = useNavigate();
   const loggedRef = useRef(false);
   const prevStateRef = useRef({ isLoading, isValid });
 
@@ -122,7 +120,7 @@ export const FormWrapper: React.FC<FormWrapperProps> = ({
       redirectPath={redirectPath}
       token={fullToken}
     >
-      <FormContent redirectPath={redirectPath}>
+      <FormContent>
         {children}
       </FormContent>
     </FormProvider>

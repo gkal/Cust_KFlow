@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useFormContext } from './useFormContext';
-import { FormLinkStatus } from '../../types/validation';
 
 interface UseStepperFormOptions {
   initialStep?: number;
@@ -131,11 +130,11 @@ export const useStepperForm = ({
     onComplete?.(finalData);
     
     // Submit the form with approved status
-    return await submitForm('approved', finalData);
+    return await submitForm('submitted', finalData);
   }, [formData, customerId, token, submitForm, onComplete]);
   
   const rejectForm = useCallback(async (reason?: string): Promise<boolean> => {
-    return await submitForm('rejected', { reason, customerId });
+    return await submitForm('expired', { reason, customerId });
   }, [submitForm, customerId]);
   
   // Calculate progress percentage

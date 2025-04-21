@@ -12,7 +12,6 @@ export const ValidationError: React.FC<ValidationErrorProps> = ({
   error, 
   className = '',
   submittedAt,
-  expiredAt,
   customerId
 }) => {
   if (!error) return null;
@@ -82,7 +81,6 @@ export const ValidationError: React.FC<ValidationErrorProps> = ({
   };
 
   const formattedSubmissionDate = formatDate(submittedAt);
-  const formattedExpirationDate = formatDate(expiredAt);
   
   return (
     <div className={`border rounded-lg p-5 shadow-md flex flex-col items-center ${themeColors.bgColor} ${themeColors.borderColor} ${className}`}>

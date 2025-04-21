@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import emailService from '../lib/services/emailService';
 
 const NotFound = () => {
   const [isAnimated, setIsAnimated] = useState(false);
@@ -41,30 +40,6 @@ const NotFound = () => {
     const timer = setTimeout(() => {
       setIsAnimated(true);
     }, 100);
-    
-    // Send notification email about the 404 error
-    const sendNotification = async () => {
-      try {
-        // Get full URL with domain
-        const fullUrl = window.location.href;
-        
-        await emailService.send404Notification({
-          pageUrl: fullUrl,
-          userAgent: navigator.userAgent,
-          referrer: document.referrer || undefined,
-          timestamp: new Date(),
-          ipAddress: undefined // IP address is typically determined server-side
-        });
-      } catch (error) {
-        console.error('Failed to send 404 notification:', error);
-        // Don't show the error to the user
-      }
-    };
-    
-    // Only send the notification in production, not during development
-    if (process.env.NODE_ENV === 'production') {
-      sendNotification();
-    }
     
     // Cleanup function to restore original title when component unmounts
     return () => {

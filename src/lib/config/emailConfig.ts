@@ -1,15 +1,14 @@
 /**
  * Email Configuration
  * 
- * This file contains configuration settings for the email service.
- * In production, these values should be set using environment variables.
+ * This file contains configuration settings for the EmailJS service.
  */
 
 // Safely access environment variables that might not be defined in the browser
 const getEnvVariable = (key: string, fallback: string): string => {
   // Check if we're running on the client side (where process.env might not be available)
   if (typeof window !== 'undefined') {
-    // For client-side, we need to access only NEXT_PUBLIC_ prefixed env vars
+    // For client-side, we need to access only client-accessible env vars
     // @ts-ignore - Accessing window.__NEXT_DATA__.props.pageProps.env which might be set during SSR
     return (window.__NEXT_DATA__?.props?.pageProps?.env?.[key]) || fallback;
   }
@@ -18,21 +17,29 @@ const getEnvVariable = (key: string, fallback: string): string => {
   return (typeof process !== 'undefined' && process.env && process.env[key]) || fallback;
 };
 
+// Parse notification recipients from comma-separated list in env var
+const getNotificationRecipients = (): string[] => {
+  const recipients = getEnvVariable('NOTIFICATION_RECIPIENTS', 'gkaloforidis@yahoo.com');
+  return recipients.split(',').map(email => email.trim());
+};
+
 export const emailConfig = {
-  // Resend API key - replace with your actual key from https://resend.com/
-  // In production, this should be set as NEXT_PUBLIC_RESEND_API_KEY in your environment
-  apiKey: getEnvVariable('RESEND_API_KEY', 're_hf3QE3rC_PysybGnnKohDEd4c9z2uq5Ag'),
-  
   // Email addresses
-  senderEmail: 'noreply@kronoseco.gr',
-  senderName: 'Kronos System',
-  notificationRecipients: ['gkaloforidis@yahoo.com'], // Add multiple emails if needed
+  senderEmail: getEnvVariable('SENDER_EMAIL', 'noreply@cse.gr'),
+  senderName: getEnvVariable('SENDER_NAME', 'Kronos Form Submission System'),
+  notificationRecipients: getNotificationRecipients(),
+  
+  // SMTP Configuration
+  smtpHost: getEnvVariable('SMTP_HOST', 'smtp.example.com'),
+  smtpPort: parseInt(getEnvVariable('SMTP_PORT', '587')),
+  smtpSecure: getEnvVariable('SMTP_SECURE', 'false') === 'true',
+  smtpUser: getEnvVariable('SMTP_USER', 'user@example.com'),
+  smtpPassword: getEnvVariable('SMTP_PASSWORD', 'password'),
   
   // Email subjects
   subjects: {
-    notFound: '404 Page Not Found Notification',
     formSubmission: 'Πραγματοποιήθηκε Αποστολή Φόρμας από πελάτη',
-    test: 'Email Service Test'
+    notFound: 'Σελίδα Δεν Βρέθηκε'
   }
 };
 

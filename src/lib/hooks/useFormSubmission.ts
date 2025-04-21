@@ -46,6 +46,9 @@ export const useFormSubmission = ({
     try {
       // Here you would typically save the form data to your database first
       // This is a placeholder for where you would save the actual form data
+      if (data) {
+        console.log('Form data to be saved:', data);
+      }
       
       // Then update the form link status
       const { success, error } = await FormLinkService.updateFormLinkStatus(token, status);
