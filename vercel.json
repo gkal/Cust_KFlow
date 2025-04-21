@@ -1,12 +1,15 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": "vite",
-  "devCommand": "npm run dev",
+  "devCommand": "pnpm run dev",
   "outputDirectory": "dist",
   "regions": ["fra1"],
   "github": {
     "silent": true
-  }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 } 
