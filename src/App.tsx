@@ -1,5 +1,8 @@
 import './styles/index.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import StepperForm from './pages/stepper-form'
+import NotFound from './pages/NotFound'
+import { FormWrapper } from './components/FormWrapper'
 
 // Force the background color
 const appStyles = {
@@ -20,13 +23,29 @@ const cardStyles = {
 
 function App() {
   return (
-    <div style={appStyles} className="app-container">
-      <div className="max-w-4xl mx-auto">
-        <div style={cardStyles}>
-          <StepperForm />
+    <BrowserRouter>
+      <div style={appStyles} className="app-container">
+        <div className="max-w-4xl mx-auto">
+          <Routes>
+            {/* Redirect root path to 404 page */}
+            <Route path="/" element={<Navigate to="/404" replace />} />
+            
+            {/* Form path with token validation */}
+            <Route path="/form/:token" element={
+              <div style={cardStyles}>
+                <FormWrapper>
+                  <StepperForm />
+                </FormWrapper>
+              </div>
+            } />
+            
+            {/* 404 Not Found page */}
+            <Route path="/404" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </div>
       </div>
-    </div>
+    </BrowserRouter>
   )
 }
 

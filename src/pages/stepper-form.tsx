@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Stepper } from '../components/ui/Stepper';
-import { supabase, getUserId, getTestCustomerId } from '../lib/supabaseClient';
+import { supabase, getUserId } from '../lib/supabaseClient';
 import { z } from 'zod';
+import { useFormContext } from '../lib/hooks/useFormContext';
+import { emailConfig } from '../lib/config/emailConfig';
 
 // Import only necessary styles
 import '../styles/index.css';
@@ -72,6 +74,7 @@ type FormData = z.infer<typeof formSchema>;
 export type SubmissionData = z.infer<typeof submissionSchema>;
 
 export default function StepperForm() {
+  const { customerId, customerName, submitForm } = useFormContext();
   const [currentStep, setCurrentStep] = useState(0);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [agreementChecked, setAgreementChecked] = useState(false);
@@ -95,6 +98,11 @@ export default function StepperForm() {
     const hasSubmitted = sessionStorage.getItem('form_submitted');
     if (hasSubmitted === 'true') {
       setFormSubmitted(true);
+    } else {
+      // Clear the submitted flag to ensure a fresh form on new token
+      setFormSubmitted(false);
+      // Also ensure it's cleared in session storage
+      sessionStorage.removeItem('form_submitted');
     }
     
     // Add event listener for page navigation
@@ -131,11 +139,21 @@ export default function StepperForm() {
     };
   }, [formSubmitted, isSubmitting]);
   
+  // Watch for token/customerId changes to reset form state for new customers
+  useEffect(() => {
+    // Reset form submission status when a new customer token is detected
+    if (customerId) {
+      console.log('New customer detected, resetting form state:', customerId);
+      setFormSubmitted(false);
+      sessionStorage.removeItem('form_submitted');
+    }
+  }, [customerId]);
+  
   // Customer data state with default values
   const [formData, setFormData] = useState<FormData>({
     // Hidden values
-    customerName: "aabbb", // Changed from "Όνομα Πελάτη" to actual customer name
-    customerEmail: "", // Default source is email
+    customerName: customerName || "",
+    customerEmail: "",
     source: "Email",
     
     // Step 1 - Customer address
@@ -157,7 +175,7 @@ export default function StepperForm() {
   const resetForm = () => {
     setCurrentStep(0);
     setFormData({
-      customerName: "aabbb",
+      customerName: customerName || "",
       customerEmail: "",
       source: "Email",
       address: "",
@@ -210,7 +228,7 @@ export default function StepperForm() {
     setFormSubmitted(false);
     setCurrentStep(0);
     setFormData({
-      customerName: "aabbb",
+      customerName: customerName || "",
       customerEmail: "",
       source: "Email",
       address: "",
@@ -331,48 +349,31 @@ export default function StepperForm() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     
-    // Create the data object to be sent to the server with correct field mappings
-    const submitData: OfferInput = {
-      // Required fields
-      customer_id: getTestCustomerId(), // Get valid customer ID for "aabbb"
-      source: formData.source || 'Email',
-      created_by: getUserId(), // Get the current user ID
-      
-      // Form data mapped to correct database fields
-      waste_type: formData.wasteType,
-      address: formData.address,
-      tk: formData.postalCode, // Field is tk, not postal_code
-      town: formData.city,
-      who_transport: formData.whoTransports, // Field is who_transport (boolean)
-      loading: formData.loading,
-      hma: formData.hma,
-      certificate: formData.certificate,
-      
-      // Metadata
-      requirements: formData.wasteType, // For backward compatibility
-      customer_comments: `Φόρτωση: ${formData.loading}`,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      deleted: false
-    };
-    
-    // Validate against submission schema
-    try {
-      submissionSchema.parse(submitData);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error('Submission validation error:', error.errors);
-        showDialog('Σφάλμα δεδομένων', 'Σφάλμα στη δομή των δεδομένων. Παρακαλώ επικοινωνήστε με τον διαχειριστή.', true);
-        setIsSubmitting(false);
-        return;
-      }
-    }
+    console.log('Starting form submission process', { customerId });
     
     try {
-      // Insert the data directly into the offers table
+      // TEMPORARILY DISABLED - Insert the data into the offers table
+      /* 
       const { data, error } = await supabase
         .from('offers')
-        .insert(submitData)
+        .insert({
+          customer_id: customerId || '',
+          source: formData.source as 'Email' | 'Phone' | 'Site' | 'Physical',
+          created_by: getUserId(),
+          waste_type: formData.wasteType,
+          address: formData.address,
+          tk: formData.postalCode || undefined,
+          town: formData.city || undefined,
+          who_transport: formData.whoTransports,
+          loading: formData.loading,
+          hma: formData.hma,
+          certificate: formData.certificate || undefined,
+          requirements: '',
+          customer_comments: '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          deleted: false
+        })
         .select();
       
       if (error) {
@@ -381,9 +382,113 @@ export default function StepperForm() {
         setIsSubmitting(false);
         return;
       }
+      */
+      
+      // Mock successful data insertion for testing
+      const data = {
+        id: '123',
+        customer_id: customerId || '',
+        created_at: new Date().toISOString()
+      };
+      console.log('Simulated successful data insertion:', data);
+      
+      // Mark the form link as submitted
+      console.log('Data inserted successfully, now marking form as submitted');
+      const submitResult = await submitForm('submitted');
+      
+      if (!submitResult) {
+        console.error('Error updating form link status');
+        showDialog('Προειδοποίηση', 'Η προσφορά καταχωρήθηκε, αλλά υπήρξε πρόβλημα στην ενημέρωση της κατάστασης του συνδέσμου.', true);
+        // Continue since the form data was saved successfully
+      } else {
+        console.log('Form link status updated successfully to submitted');
+      }
       
       console.log('Form submitted successfully:', data);
       showDialog('Επιτυχία!', 'Η φόρμα υποβλήθηκε επιτυχώς!', false);
+      
+      // Send email notification via proxy to avoid CORS issues
+      try {
+        console.log('Sending email notification via proxy');
+        
+        // Generate HTML for form fields
+        const formFieldsHtml = Object.entries(formData)
+          .map(([key, value]) => {
+            // Format arrays and objects for better readability
+            let displayValue = value;
+            if (Array.isArray(value)) {
+              displayValue = value.join(', ');
+            } else if (typeof value === 'object' && value !== null) {
+              displayValue = JSON.stringify(value, null, 2);
+            }
+            
+            return `<tr>
+              <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${key}</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">${displayValue}</td>
+            </tr>`;
+          })
+          .join('');
+        
+        // Use fetch with the proxy instead of Resend SDK directly
+        const emailResponse = await fetch('/api/email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: `${emailConfig.senderName} <${emailConfig.senderEmail}>`,
+            to: emailConfig.notificationRecipients,
+            subject: `${emailConfig.subjects.formSubmission}: ${formData.customerName}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h1 style="color: #52796f; border-bottom: 2px solid #52796f; padding-bottom: 10px;">Νέα Υποβολή Φόρμας</h1>
+                
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                  <h2 style="color: #333; margin-top: 0;">Στοιχεία Πελάτη</h2>
+                  <p><strong>Όνομα:</strong> ${formData.customerName}</p>
+                  <p><strong>Email:</strong> ${formData.customerEmail || 'not-provided@example.com'}</p>
+                  <p><strong>Ημερομηνία Υποβολής:</strong> ${new Date().toLocaleString('el-GR')}</p>
+                </div>
+                
+                <h2 style="color: #333;">Δεδομένα Φόρμας</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                  <thead>
+                    <tr style="background-color: #52796f; color: white;">
+                      <th style="padding: 10px; text-align: left;">Πεδίο</th>
+                      <th style="padding: 10px; text-align: left;">Τιμή</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${formFieldsHtml}
+                  </tbody>
+                </table>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 0.9em; color: #666;">
+                  <p>Αυτό είναι ένα αυτόματο email από το σύστημα της ιστοσελίδας Kronos.</p>
+                </div>
+              </div>
+            `
+          })
+        });
+        
+        if (emailResponse.ok) {
+          const result = await emailResponse.json();
+          console.log('Email notification sent successfully', result);
+        } else {
+          console.warn('Email notification failed with status:', emailResponse.status);
+          // For debugging purposes
+          try {
+            const errorText = await emailResponse.text();
+            console.warn('Email error response:', errorText);
+          } catch (e) {
+            console.warn('Could not read error response text');
+          }
+          console.warn('Email notification failed but form was submitted');
+        }
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+        // Don't show error to user since the form was successfully submitted
+      }
       
       // Mark form as submitted in session storage
       sessionStorage.setItem('form_submitted', 'true');

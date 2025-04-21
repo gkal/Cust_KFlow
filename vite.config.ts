@@ -18,6 +18,19 @@ export default defineConfig({
     },
     watch: {
       usePolling: true
+    },
+    proxy: {
+      '/api/email': {
+        target: 'https://api.resend.com/emails',
+        changeOrigin: true,
+        rewrite: () => '',
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req, res, options) => {
+            // Add authentication header
+            proxyReq.setHeader('Authorization', `Bearer ${process.env.RESEND_API_KEY || 're_hf3QE3rC_PysybGnnKohDEd4c9z2uq5Ag'}`);
+          });
+        }
+      }
     }
   },
   css: {

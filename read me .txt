@@ -1,3 +1,8 @@
+git clone https://github.com/gkal/Cust_Kflow
+cd cust_Kflow
+npm ci
+
+
 pnpm run dev -- --host
 
 
@@ -5,3 +10,8 @@ pnpm run build
 
 
 pnpm run serve
+
+
+resend
+
+re_hf3QE3rC_PysybGnnKohDEd4c9z2uq5Ag
