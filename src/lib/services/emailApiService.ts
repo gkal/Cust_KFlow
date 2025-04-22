@@ -84,10 +84,10 @@ function formatGreekFullDate(date: Date): string {
 export const sendFormSubmissionNotification = async (data: FormSubmissionData) => {
   try {
     // Get the notification recipients, with fallback if emailConfig is undefined or empty
-    let recipients = 'gkaloforidis@yahoo.com';
+    let recipients = ['gkaloforidis@yahoo.com'];
     try {
       if (emailConfig && emailConfig.notificationRecipients && emailConfig.notificationRecipients.length > 0) {
-        recipients = emailConfig.notificationRecipients.join(',');
+        recipients = emailConfig.notificationRecipients;
       }
     } catch (e) {
       // Use fallback recipient
@@ -107,30 +107,33 @@ export const sendFormSubmissionNotification = async (data: FormSubmissionData) =
 Ημερομηνία/Ώρα Υποβολής: ${formatGreekFullDate(data.timestamp)}
     `;
     
-    // Prepare template parameters
-    const templateParams = {
-      to_name: 'Administrator',
-      to_email: recipients,
-      from_name: emailConfig.senderName,
-      title: `${emailConfig.subjects.formSubmission} - ${data.customerName}`,
-      customer_name: data.customerName,
-      customer_email: data.customerEmail || '',
-      customer_phone: data.customerPhone || '',
-      submission_time: data.timestamp.toLocaleString('el-GR'),
-      message: fullMessage
-    };
+    // Send emails to each recipient
+    const results = await Promise.all(recipients.map(async (recipient) => {
+      // Prepare template parameters
+      const templateParams = {
+        to_name: 'Administrator',
+        to_email: recipient,
+        from_name: emailConfig.senderName,
+        title: `${emailConfig.subjects.formSubmission} - ${data.customerName}`,
+        customer_name: data.customerName,
+        customer_email: data.customerEmail || '',
+        customer_phone: data.customerPhone || '',
+        submission_time: data.timestamp.toLocaleString('el-GR'),
+        message: fullMessage
+      };
 
-    // Send email using EmailJS
-    const response = await emailjs.send(
-      EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.FORM_TEMPLATE_ID,
-      templateParams
-    );
+      // Send email using EmailJS
+      return emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.FORM_TEMPLATE_ID,
+        templateParams
+      );
+    }));
     
     return { 
       messageId: `emailjs-${Date.now()}`, 
       success: true,
-      response
+      response: results
     };
   } catch (error) {
     // Return a fallback response so the app doesn't break
@@ -149,10 +152,10 @@ export const sendFormSubmissionNotification = async (data: FormSubmissionData) =
 export const sendExpiredLinkNotification = async (data: ExpiredLinkData) => {
   try {
     // Get the notification recipients, with fallback if emailConfig is undefined or empty
-    let recipients = 'gkaloforidis@yahoo.com';
+    let recipients = ['gkaloforidis@yahoo.com'];
     try {
       if (emailConfig && emailConfig.notificationRecipients && emailConfig.notificationRecipients.length > 0) {
-        recipients = emailConfig.notificationRecipients.join(',');
+        recipients = emailConfig.notificationRecipients;
       }
     } catch (e) {
       // Use fallback recipient
@@ -174,30 +177,33 @@ Token Συνδέσμου: ${data.token}
 Ίσως θα θέλατε να επικοινωνήσετε μαζί του για να δημιουργήσετε έναν νέο σύνδεσμο.
     `;
     
-    // Prepare template parameters
-    const templateParams = {
-      to_name: 'Administrator',
-      to_email: recipients,
-      from_name: emailConfig.senderName,
-      title: `${emailConfig.subjects.expiredLink}${data.customerName ? ' - ' + data.customerName : ''}`,
-      customer_name: data.customerName || 'Μη διαθέσιμο',
-      customer_email: '',
-      customer_phone: '',
-      submission_time: data.currentTime.toLocaleString('el-GR'),
-      message: fullMessage
-    };
+    // Send emails to each recipient
+    const results = await Promise.all(recipients.map(async (recipient) => {
+      // Prepare template parameters
+      const templateParams = {
+        to_name: 'Administrator',
+        to_email: recipient,
+        from_name: emailConfig.senderName,
+        title: `${emailConfig.subjects.expiredLink}${data.customerName ? ' - ' + data.customerName : ''}`,
+        customer_name: data.customerName || 'Μη διαθέσιμο',
+        customer_email: '',
+        customer_phone: '',
+        submission_time: data.currentTime.toLocaleString('el-GR'),
+        message: fullMessage
+      };
 
-    // Send email using EmailJS
-    const response = await emailjs.send(
-      EMAILJS_CONFIG.SERVICE_ID,
-      EMAILJS_CONFIG.FORM_TEMPLATE_ID,
-      templateParams
-    );
+      // Send email using EmailJS
+      return emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.FORM_TEMPLATE_ID,
+        templateParams
+      );
+    }));
     
     return { 
       messageId: `emailjs-${Date.now()}`, 
       success: true,
-      response
+      response: results
     };
   } catch (error) {
     // Return a fallback response so the app doesn't break
