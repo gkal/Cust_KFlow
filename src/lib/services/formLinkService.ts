@@ -63,5 +63,41 @@ export const FormLinkService = {
         error: 'An unexpected error occurred while updating form status'
       };
     }
+  },
+
+  /**
+   * Mark a form link as deleted to prevent further access
+   * @param token Form link token
+   * @returns Success status and error message if any
+   */
+  async markLinkAsDeleted(
+    token: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Clean the token if it contains any query parameters
+      const cleanToken = token.split('?')[0];
+      
+      const { error } = await supabase
+        .from('customer_form_links')
+        .update({
+          is_deleted: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('token', cleanToken);
+      
+      if (error) {
+        return {
+          success: false,
+          error: 'Failed to mark link as deleted'
+        };
+      }
+      
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: 'An unexpected error occurred while updating link status'
+      };
+    }
   }
 }; 

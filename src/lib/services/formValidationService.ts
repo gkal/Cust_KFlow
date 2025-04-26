@@ -63,13 +63,24 @@ export const FormValidationService = {
         };
       }
       
+      // Get customer information (moved here to retrieve for all cases including expired links)
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('id, company_name')
+        .eq('id', formLink.customer_id)
+        .single();
+      
+      const customerName = customer?.company_name || null;
+      
       // Check if the form link has expired
       if (new Date(formLink.expires_at) < new Date()) {
         const formattedDate = formatGreekDate(formLink.expires_at);
         return {
           isValid: false,
           error: `Αυτός ο σύνδεσμος έχει λήξει στις ${formattedDate}.`,
-          expiredAt: formLink.expires_at
+          expiredAt: formLink.expires_at,
+          customerId: formLink.customer_id,
+          customerName: customerName // Include customer name for expired links
         };
       }
       
@@ -87,24 +98,11 @@ export const FormValidationService = {
         };
       }
       
-      // Get customer information
-      const { data: customer, error: customerError } = await supabase
-        .from('customers')
-        .select('id, company_name')
-        .eq('id', formLink.customer_id)
-        .single();
-      
-      if (customerError || !customer) {
-        return {
-          isValid: false,
-          error: 'Customer information not found'
-        };
-      }
-      
+      // Success case: valid link
       return {
         isValid: true,
-        customerId: customer.id,
-        customerName: customer.company_name
+        customerId: customer?.id,
+        customerName: customerName
       };
     } catch (error) {
       return {

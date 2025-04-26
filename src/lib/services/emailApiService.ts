@@ -164,14 +164,14 @@ export const sendExpiredLinkNotification = async (data: ExpiredLinkData) => {
 Προσπάθεια χρήσης ληγμένου συνδέσμου
 
 Πελάτης: ${data.customerName || 'Μη διαθέσιμο'}
-ID Πελάτη: ${data.customerId || 'Μη διαθέσιμο'}
-Token Συνδέσμου: ${data.token}
 
 Ο σύνδεσμος έληξε στις: ${formatGreekFullDate(expiredDate)}
 Η προσπάθεια χρήσης έγινε στις: ${formatGreekFullDate(data.currentTime)}
 
 Ο πελάτης προσπάθησε να χρησιμοποιήσει τον σύνδεσμο μετά τη λήξη του.
 Ίσως θα θέλατε να επικοινωνήσετε μαζί του για να δημιουργήσετε έναν νέο σύνδεσμο.
+
+Παρακαλώ δείτε τα στοιχεία στη βάση δεδομένων του K-Flow
     `;
     
     // Prepare template parameters

@@ -4,6 +4,7 @@ import { FormProvider, useFormContext } from '../lib/hooks/useFormContext';
 import { ValidationError } from './ui/ValidationError';
 import { ValidationLoading } from './ui/ValidationLoading';
 import { sendExpiredLinkNotification } from '../lib/services/emailApiService';
+import { FormLinkService } from '../lib/services/formLinkService';
 
 interface FormWrapperProps {
   children: React.ReactNode;
@@ -37,17 +38,27 @@ const FormContent: React.FC<FormContentProps> = ({ children }) => {
     const isExpirationError = error?.includes('έχει λήξει');
     
     if (!isLoading && !isValid && isExpirationError && expiredAt && !emailSentRef.current && token) {
-      // Send the notification email
-      sendExpiredLinkNotification({
-        customerId,
-        customerName,
-        expiredAt,
-        currentTime: new Date(),
-        token
-      });
+      const handleExpiredLink = async () => {
+        // Send the notification email
+        await sendExpiredLinkNotification({
+          customerId,
+          customerName,
+          expiredAt,
+          currentTime: new Date(),
+          token
+        });
+        
+        // Mark the link as deleted to prevent multiple notifications
+        // This will make any future requests with this token return "link not found"
+        if (token) {
+          await FormLinkService.markLinkAsDeleted(token);
+        }
+        
+        // Mark as sent to prevent duplicate emails
+        emailSentRef.current = true;
+      };
       
-      // Mark as sent to prevent duplicate emails
-      emailSentRef.current = true;
+      handleExpiredLink();
     }
   }, [isLoading, isValid, error, expiredAt, customerId, customerName, token]);
 
